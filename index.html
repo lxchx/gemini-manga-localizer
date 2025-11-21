@@ -1288,10 +1288,30 @@
     }
 
     function parseQualityResponse(text) {
-      const lines = text
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean);
+      const trimmed = (text || "").trim();
+      if (!trimmed) {
+        throw new Error("质检返回为空。");
+      }
+      if (trimmed.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          const statusRaw = String(parsed.status || "").toLowerCase();
+          if (statusRaw === "ok") {
+            return { status: "ok", revised: null };
+          }
+          if (statusRaw === "revise") {
+            const entries = normalizeEntriesFromJson(parsed.entries || parsed.updated_entries || []);
+            if (entries.length) {
+              return { status: "revise", revised: buildTranslationTextFromEntries(entries) };
+            }
+            const revisedText = String(parsed.revisedText || parsed.translation || parsed.revised || "").trim();
+            return { status: "revise", revised: revisedText || null };
+          }
+        } catch (error) {
+          console.warn("Failed to parse structured quality response:", error);
+        }
+      }
+      const lines = trimmed.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
       const statusIdx = lines.findIndex((line) => line.toUpperCase().startsWith("STATUS:"));
       if (statusIdx === -1) {
         throw new Error(`质检返回格式异常：${text}`);
@@ -1420,13 +1440,75 @@
       return rows.join("\n");
     }
 
+    const TRANSLATION_ENTRY_SCHEMA = {
+      type: "object",
+      properties: {
+        label: {
+          type: "string",
+          description: "位置描述，要具体到画面编号、人物特征与方位，例如“第二幅左上角老师的旁白框”“第三幅女生右侧的椭圆气泡”“第一幅主角脚下的SFX”“十点钟方向小明脑袋右上角的心声气泡”"
+        },
+        text_type: {
+          type: "string",
+          enum: ["bubble", "narration_box", "sfx", "panel_note", "other"],
+          description: "文本类型：气泡、旁白框、拟声词等"
+        },
+        style: {
+          type: "string",
+          description: "字体或风格特征，例如“手写体”“粗体”“描边白字”等"
+        },
+        color: {
+          type: "string",
+          description: "文字的主要颜色或填充信息，例如“白字黑描边”"
+        },
+        source: {
+          type: "string",
+          description: "检测到的原文"
+        },
+        target: {
+          type: "string",
+          description: "翻译内容"
+        }
+      },
+      required: ["source", "target"],
+      additionalProperties: false
+    };
+
+    const TRANSLATION_RESPONSE_SCHEMA = {
+      type: "object",
+      properties: {
+        entries: {
+          type: "array",
+          items: TRANSLATION_ENTRY_SCHEMA
+        }
+      },
+      required: ["entries"],
+      additionalProperties: false
+    };
+
+    const QUALITY_RESPONSE_SCHEMA = {
+      type: "object",
+      properties: {
+        status: {
+          type: "string",
+          enum: ["ok", "revise"]
+        },
+        entries: {
+          type: "array",
+          items: TRANSLATION_ENTRY_SCHEMA
+        }
+      },
+      required: ["status"],
+      additionalProperties: false
+    };
+
     function buildTranslationPromptText(languageName, languageCode, instructions, glossaryPairs) {
       const languageDescriptor = languageCode ? `${languageName}（ISO 639-1: ${languageCode}）` : languageName;
       let prompt = [
         "你是一名专业的漫画翻译。阅读这张漫画图片中的所有文字（包括拟声词/音效文字），按照气泡或文本块的顺序输出翻译结果。",
         `目标语言：${languageDescriptor}。请确保所有译文都使用该语言。`,
-        "输出 `位置描述：原文 => 翻译` 的列表，用换行分隔。位置描述要明确文本的位置，比如位于画面的区域或角色旁。",
-        "不要描述画面，也不要新增内容。以遵循输出格式为第一要务。"
+        "请严格输出 JSON 对象 { \"entries\": [{\"label\": \"位置描述\", \"text_type\": \"气泡/拟声词...\", \"style\": \"字体风格\", \"color\": \"颜色信息\", \"source\": \"原文\", \"target\": \"译文\"}, ...] }，不得添加任何额外字段或文字。",
+        "label 必须详细描述位置（例如“第三幅右侧角色头顶的长椭圆气泡”“第二幅左侧少女脚下的 SFX”），不要只写方向；text_type 写明文本类型（气泡/拟声词/旁白等）；style 和 color 需要概括字体风格与颜色特征。",
+        "翻译长度应尽量与原文接近，宁可略短也不要明显增多；禁止添加括号、注解或解释说明，只输出纯翻译。"
       ].join("\n");
       if (instructions) {
         prompt += `\n额外要求：${instructions}`;
@@ -1449,9 +1531,11 @@
     function buildQualityPromptText(languageName, languageCode, instructions, glossaryPairs) {
       const languageDescriptor = languageCode ? `${languageName}（ISO 639-1: ${languageCode}）` : languageName;
       let prompt = [
-        "你是一名漫画翻译质检。请根据这张漫画图片与下方的翻译列表，判断是否存在遗漏的文本（特别是拟声词/音效）",
-        "或翻译错误。如果一切准确完整，请输出 `STATUS: OK`。如果需要修正，请输出 `STATUS: REVISE`，并在下一行",
-        "给出修订后的完整翻译列表（格式同翻译家输出）。",
+        "你是一名漫画翻译质检。请根据这张漫画图片与下方的翻译列表，判断是否存在遗漏的文本（特别是拟声词/音效）或翻译错误。",
+        "必须以 JSON 对象 { \"status\": \"ok\" | \"revise\", \"entries\": [...] } 输出结果：",
+        "- 当翻译无问题时返回 {\"status\":\"ok\"}；",
+        "- 如果需要修订，返回 {\"status\":\"revise\",\"entries\":[{\"label\": \"位置\", \"source\": \"原文\", \"target\": \"修订翻译\"}, ...]}。",
+        "不要写任何额外的文字或字段。",
         `目标翻译语言：${languageDescriptor}`
       ].join("\n");
       if (instructions) {
@@ -1463,8 +1547,45 @@
       return prompt;
     }
 
+    function normalizeEntriesFromJson(list) {
+      if (!Array.isArray(list)) return [];
+      return list
+        .map((entry) => ({
+          label: entry?.label ?? entry?.position ?? "",
+          source: entry?.source ?? entry?.original ?? "",
+          target: entry?.target ?? entry?.translation ?? ""
+        }))
+        .map((entry) => ({
+          label: String(entry.label || ""),
+          source: String(entry.source || ""),
+          target: String(entry.target || "")
+        }))
+        .filter((entry) => entry.label || entry.source || entry.target);
+    }
+
     function parseTranslationEntries(text) {
-      const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+      const trimmed = (text || "").trim();
+      if (!trimmed) return [];
+      const maybeParseJson = () => {
+        if (!/^[\[{]/.test(trimmed)) return null;
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return parsed;
+          }
+          if (parsed && Array.isArray(parsed.entries)) {
+            return parsed.entries;
+          }
+        } catch (error) {
+          console.warn("Failed to parse translation JSON:", error);
+        }
+        return null;
+      };
+      const jsonEntries = maybeParseJson();
+      if (jsonEntries) {
+        return normalizeEntriesFromJson(jsonEntries);
+      }
+      const lines = trimmed.split(/\n+/).map((line) => line.trim()).filter(Boolean);
       const entries = [];
       const regex = /^(.*?)[:：]\s*(.*?)\s*=>\s*(.+)$/;
       lines.forEach((line) => {
@@ -1606,7 +1727,11 @@
             ]
           }
         ],
-        thinking_level: thinkingLevel
+        thinking_level: thinkingLevel,
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: TRANSLATION_RESPONSE_SCHEMA
+        }
       };
     }
 
@@ -1648,7 +1773,11 @@
             ]
           }
         ],
-        thinking_level: thinkingLevel
+        thinking_level: thinkingLevel,
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: QUALITY_RESPONSE_SCHEMA
+        }
       };
     }
 
@@ -1757,11 +1886,12 @@
         thinkingLevel
       );
       const translationResponse = await callModel(translationConfig, translationPayload);
-      const translationText = extractTextFromParts(extractParts(translationResponse));
-      if (!translationText) {
+      const translationTextRaw = extractTextFromParts(extractParts(translationResponse));
+      if (!translationTextRaw) {
         throw new Error("翻译结果为空，可能识别失败。");
       }
-      const entries = parseTranslationEntries(translationText);
+      const entries = parseTranslationEntries(translationTextRaw);
+      const translationText = buildTranslationTextFromEntries(entries);
       state.latestTranslations = translationText;
       state.translationEntries = entries;
       renderTranslationTable(entries, state.shouldPauseAfterTranslation);
