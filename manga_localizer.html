@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gemini 漫画汉化器</title>
+  <style>
+    :root {
+      font-family: "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+      color: #1f2933;
+      background-color: #f5f7fa;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    h1, h2 {
+      margin-top: 0;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .subtitle {
+      margin: 4px 0 0;
+      color: #64748b;
+      font-size: 15px;
+    }
+    .project-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .github-star {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: #0f172a;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.2);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .github-star:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.3);
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      margin-bottom: 12px;
+    }
+    input[type="text"],
+    input[type="password"],
+    select,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5f5;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    textarea {
+      min-height: 160px;
+      resize: vertical;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-size: 15px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+    .images {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      justify-items: center;
+      align-items: flex-start;
+    }
+    .images figure {
+      margin: 0;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid #e0e7ff;
+      width: min(100%, 560px);
+    }
+    .images img {
+      width: 100%;
+      max-height: 80vh;
+      border-radius: 8px;
+      background: #fff;
+      object-fit: contain;
+    }
+    .hidden {
+      display: none !important;
+    }
+    details {
+      border: 1px solid #e0e7ff;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      background: #f8fafc;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: 600;
+      margin: -12px -16px 12px -16px;
+      padding: 12px 16px;
+    }
+    details[open] summary {
+      border-bottom: 1px solid #e0e7ff;
+      margin-bottom: 12px;
+    }
+    .checkbox-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 16px;
+      border-radius: 10px;
+      overflow: auto;
+      font-size: 13px;
+      min-height: 160px;
+    }
+    .flex-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .flex-row label {
+      flex: 1;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+    }
+    td input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      padding: 6px 4px;
+    }
+    td input:focus {
+      outline: none;
+      background: #eef2ff;
+    }
+    .sync-input.hidden {
+      display: none;
+    }
+    .table-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .btn.secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .layout {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .payment-notice {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px dashed #fca5a5;
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+    .payment-notice img {
+      width: 110px;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid #fecaca;
+      background: #fff;
+    }
+    .workflow-col,
+    .translation-col {
+      flex: 1 1 320px;
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+    }
+    .workflow-col .card:last-child,
+    .translation-col .card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #logOutput {
+      flex: 1;
+    }
+    .wide-add-btn {
+      width: 100%;
+      margin-top: 10px;
+      justify-content: center;
+      font-weight: 600;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .field-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .progress-card {
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+    }
+    .stepper {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 16px;
+      flex: 1 1 150px;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+    }
+    .step-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 1;
+    }
+    .step.pending .step-icon {
+      background: #e2e8f0;
+      color: #475569;
+    }
+    .step.in-progress {
+      border-color: #a5b4fc;
+      background: #eef2ff;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .step.in-progress .step-icon {
+      background: #6366f1;
+      color: #fff;
+      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6);
+      animation: pulse-ring 1.5s infinite;
+    }
+    .step.completed .step-icon {
+      background: #22c55e;
+      color: #fff;
+    }
+    .step.skipped {
+      border-style: dashed;
+      color: #94a3b8;
+      background: #f8fafc;
+    }
+    .step.skipped .step-icon {
+      background: #e2e8f0;
+      color: #94a3b8;
+    }
+    #openBlendBtn {
+      margin-top: 16px;
+    }
+    .modal-open {
+      overflow: hidden;
+    }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 24px;
+    }
+    .modal.hidden {
+      display: none;
+    }
+    .modal-content {
+      width: min(1200px, 95vw);
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.4);
+      display: flex;
+      flex-direction: column;
+      max-height: 95vh;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .modal-body {
+      padding: 20px 24px 28px;
+      overflow: auto;
+    }
+    .close-btn {
+      background: transparent;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: #475569;
+    }
+    .blend-main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .blend-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-start;
+      background: #f8fafc;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid #e0e7ff;
+    }
+    .blend-toolbar .control-group {
+      flex: 1 1 200px;
+      margin: 0;
+    }
+    .blend-toolbar .blend-actions {
+      flex: 1 1 200px;
+      justify-content: flex-end;
+    }
+    .blend-content {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .blend-canvas-wrapper,
+    .blend-preview-wrapper {
+      flex: 1 1 360px;
+      min-width: 320px;
+      position: relative;
+    }
+    .blend-preview-wrapper h4 {
+      margin: 0 0 12px;
+    }
+    .blend-canvas-wrapper canvas,
+    .blend-preview-wrapper canvas {
+      width: 100%;
+      border: 1px solid #cbd5f5;
+      border-radius: 12px;
+      background: repeating-conic-gradient(#f8fafc 0% 25%, #eef2ff 0% 50%);
+      display: block;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .mode-toggle {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .mode-toggle label {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #cbd5f5;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mode-toggle input {
+      accent-color: #6366f1;
+    }
+    .blend-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #previewCanvas {
+      background: #fff;
+    }
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 12px rgba(99, 102, 241, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+      }
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5);
+      }
+      70% {
+        box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div>
+      <h1 style="margin-bottom: 4px;">Gemini 漫画汉化工作台</h1>
+      <p class="subtitle">Gemini Manga Localizer · 翻译 + 质检 + 嵌字全流程工具</p>
+    </div>
+    <div class="project-links">
+      <a
+        class="github-star"
+        href="https://github.com/lxchx/gemini-manga-localizer"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        ⭐ Star on GitHub
+      </a>
+    </div>
+  </div>
+
+  <details class="card model-settings" id="modelSettings">
+    <summary>模型设置（点击展开配置 Base URL / Endpoint / Key）</summary>
+    <div class="model-settings-body">
+      <details>
+        <summary>翻译模型</summary>
+        <div class="flex-row">
+          <label>
+            Base URL
+            <input type="text" id="translationBaseUrl" placeholder="https://xxx.api.com" />
+          </label>
+          <label>
+            Endpoint
+            <input type="text" id="translationEndpoint" placeholder="/v1beta/models/gemini-3-pro-preview:generateContent" />
+          </label>
+        </div>
+        <label>
+          API Key
+          <input type="password" id="translationKey" placeholder="sk-..." />
+        </label>
+      </details>
+      <details>
+        <summary>图像模型</summary>
+        <label class="checkbox-inline">
+          <input type="checkbox" id="imageModelSyncAll" />
+          与翻译模型全部一致
+        </label>
+        <div class="flex-row">
+          <label>
+            <span class="checkbox-inline">
+              <input type="checkbox" id="imageModelSyncBase" checked />
+              Base URL
+            </span>
+            <input type="text" id="imageBaseUrl" class="sync-input" placeholder="https://xxx.api.com" disabled />
+          </label>
+          <label>
+            <span class="checkbox-inline">
+              <input type="checkbox" id="imageModelSyncEndpoint" />
+              Endpoint
+            </span>
+            <input type="text" id="imageEndpoint" class="sync-input" placeholder="/v1beta/models/gemini-3-pro-image-preview:generateContent" />
+          </label>
+        </div>
+        <label>
+          <span class="checkbox-inline">
+            <input type="checkbox" id="imageModelSyncKey" />
+            API Key
+          </span>
+          <input type="password" id="imageKey" class="sync-input" placeholder="sk-..." />
+        </label>
+      </details>
+    </div>
+  </details>
+
+  <div class="layout">
+    <div class="workflow-col">
+      <section class="card">
+        <h2>运行配置</h2>
+        <div class="flex-row">
+          <label>
+            媒体精度
+            <select id="mediaLevel">
+              <option value="media_resolution_high" selected>High</option>
+              <option value="media_resolution_medium">Medium</option>
+              <option value="media_resolution_low">Low</option>
+            </select>
+          </label>
+          <label>
+            思考等级
+            <select id="thinkingLevel">
+              <option value="high" selected>High</option>
+              <option value="low">Low</option>
+            </select>
+          </label>
+          <label>
+            输出分辨率
+            <select id="imageSize">
+              <option value="1K" selected>1K</option>
+              <option value="2K">2K</option>
+              <!-- <option value="4K">4K（暂未开放）</option> -->
+            </select>
+          </label>
+        </div>
+      <label>
+        漫画图片
+        <input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp" />
+      </label>
+      <label class="checkbox-inline">
+        <input type="checkbox" id="pauseAfterTranslation" />
+        翻译后等待用户的手动润色，再继续后续流程
+      </label>
+      <label class="checkbox-inline">
+        <input type="checkbox" id="enableQualityCheck" />
+        启用翻译质检(失败概率很高，谨慎使用)
+      </label>
+        <button class="btn" id="runBtn">开始汉化</button>
+        <button class="btn secondary hidden" id="retryStepBtn">重试当前步骤</button>
+        <p id="statusMessage"></p>
+        <div id="paymentNotice" class="payment-notice hidden">
+          <img src="data:image/png;base64,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" alt="收款码" />
+          <div>
+            <p>可能是余额已经用完，可以扫码充值。</p>
+            <p>备注“漫画汉化公共”会抽成 10%，其他充值到公共池子里；备注“漫画汉化私人 + 邮箱”会抽成 20%，我们提供翻译和绘图 key；当然也可以自己填 key。</p>
+            <p>充值请务必备注用途，否则视为打赏</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>流程日志</h2>
+        <pre id="logOutput"></pre>
+      </section>
+    </div>
+
+    <div class="translation-col">
+      <section class="card">
+        <h2>翻译设置</h2>
+        <label>
+          目标语言
+          <select id="targetLanguage">
+            <option value="zh" selected>中文</option>
+            <option value="en">英文</option>
+            <option value="ja">日文</option>
+            <option value="ko">韩文</option>
+          </select>
+        </label>
+        <label>
+          自定义语言名称
+          <input type="text" id="customLanguage" placeholder="例如：文言文 / 古英语" />
+        </label>
+        <label>
+          额外翻译需求
+          <textarea id="translationInstructions" placeholder="例如：保持敬语体系、一律采用简体中文、保留角色昵称。"></textarea>
+        </label>
+        <div class="form-group">
+          <span class="field-label">术语表</span>
+          <div class="table-actions">
+            <button type="button" class="btn secondary" id="importGlossaryBtn">导入 CSV</button>
+            <button type="button" class="btn secondary" id="exportGlossaryBtn">导出 CSV</button>
+            <input type="file" id="importGlossaryInput" accept=".csv" hidden />
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 45%;">原词</th>
+                <th style="width: 45%;">译词</th>
+            <th style="width: 10%;" id="translationActionHeader">操作</th>
+              </tr>
+            </thead>
+            <tbody id="glossaryTableBody"></tbody>
+          </table>
+          <button type="button" class="btn wide-add-btn" id="addGlossaryRowBtn">+ 新增术语</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <section class="card progress-card">
+    <h2>当前状态</h2>
+    <ul class="stepper" id="stepper">
+      <li class="step pending" data-step-index="0">
+        <span class="step-icon">1</span>
+        <span>准备素材</span>
+      </li>
+      <li class="step pending" data-step-index="1">
+        <span class="step-icon">2</span>
+        <span>识别与翻译</span>
+      </li>
+      <li class="step pending" data-step-index="2">
+        <span class="step-icon">3</span>
+        <span>第一轮嵌字</span>
+      </li>
+      <li class="step pending" data-step-index="3">
+        <span class="step-icon">4</span>
+        <span>成品质检</span>
+      </li>
+      <li class="step pending" data-step-index="4">
+        <span class="step-icon">5</span>
+        <span>回炉再嵌字</span>
+      </li>
+      <li class="step pending" data-step-index="5">
+        <span class="step-icon">6</span>
+        <span>最终输出</span>
+      </li>
+    </ul>
+  </section>
+
+  <section class="card" id="translationResultCard">
+    <h2>翻译结果</h2>
+    <div id="translationTableWrapper" class="hidden">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 25%;">位置描述</th>
+            <th style="width: 35%;">原文</th>
+            <th style="width: 35%;">翻译</th>
+            <th style="width: 5%;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="translationTableBody"></tbody>
+      </table>
+      <button type="button" class="btn wide-add-btn hidden" id="addTranslationRowBtn">+ 新增条目</button>
+    </div>
+    <div id="editControls" class="hidden table-actions">
+      <button type="button" class="btn" id="resumeEditingBtn">完成编辑，继续流程</button>
+      <button type="button" class="btn secondary" id="cancelEditingBtn">取消编辑，重新开始</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>过程与成品图</h2>
+    <div class="images">
+      <figure id="originalFigure" class="hidden">
+        <figcaption>原始漫画</figcaption>
+        <img id="originalImage" alt="原始漫画尚未加载" />
+      </figure>
+      <figure id="firstPassFigure" class="hidden">
+        <figcaption id="firstPassCaption">第一轮嵌字图</figcaption>
+        <img id="firstPassImage" alt="第一轮图像尚未生成" />
+      </figure>
+      <figure id="finalFigure" class="hidden">
+        <figcaption id="finalCaption">最终成品图</figcaption>
+        <img id="finalImage" alt="最终图像尚未生成" />
+      </figure>
+    </div>
+    <button type="button" class="btn hidden" id="openBlendBtn">成品融合微调</button>
+  </section>
+
+  <div class="modal hidden" id="blendModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h3 style="margin: 0;">融合遮罩编辑</h3>
+          <small>在左侧画笔区域勾选需要保留的成品区域，右侧实时查看融合效果</small>
+        </div>
+        <button type="button" class="close-btn" id="closeBlendModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="blend-main">
+          <div class="blend-toolbar">
+            <div class="control-group">
+              <label for="brushSize">画笔大小：<span id="brushSizeValue">40px</span></label>
+              <input type="range" id="brushSize" min="5" max="160" value="40" />
+            </div>
+            <div class="control-group">
+              <span>模式</span>
+              <div class="mode-toggle">
+                <label>
+                  <input type="radio" name="brushMode" value="paint" checked />
+                  画笔（保留成品）
+                </label>
+                <label>
+                  <input type="radio" name="brushMode" value="erase" />
+                  橡皮擦（恢复原图）
+                </label>
+              </div>
+            </div>
+            <div class="blend-actions">
+              <button type="button" class="btn secondary" id="resetMaskBtn">清空遮罩</button>
+              <button type="button" class="btn" id="downloadBlendBtn">下载融合结果</button>
+            </div>
+          </div>
+          <div class="blend-content">
+            <div class="blend-canvas-wrapper">
+              <canvas id="blendCanvas"></canvas>
+            </div>
+            <div class="blend-preview-wrapper">
+              <h4 style="margin: 4px 0 8px;">融合预览</h4>
+              <canvas id="previewCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SECRET_TOKEN = "gemini-manga-localizer";
+    function decryptValue(base64Value, secret = SECRET_TOKEN) {
+      if (!base64Value) return "";
+      const binary = atob(base64Value);
+      let result = "";
+      for (let i = 0; i < binary.length; i += 1) {
+        const code = binary.charCodeAt(i) ^ secret.charCodeAt(i % secret.length);
+        result += String.fromCharCode(code);
+      }
+      return result;
+    }
+
+    const ENCRYPTED_DEFAULT_BASE_URL = "DxEZGR1TAkIXBxdPWAILGggCDhsVG0kGAgQ=";
+    const ENCRYPTED_TRANSLATION_ENDPOINT = "SBNcCwsdTEIMAQMEQR9ABAQBABQMX1RIHRsBRF0fBBgOBFpWCAYPCRsbERckCgMdCwdZ";
+    const ENCRYPTED_IMAGE_ENDPOINT = "SBNcCwsdTEIMAQMEQR9ABAQBABQMX1RIHRsBREQAAAkCTF0eChUICR5AAhcJAB8IGgxuAg8aAg9Z";
+    const ENCRYPTED_TRANSLATION_API_KEY = "FA5AEScAYVgEP1MkXjYdEzQIUDIcCygjFD8aWFwnJhYtUR07ISdXHVofE0MQF11ZNj8b";
+    const ENCRYPTED_IMAGE_API_KEY = "FA5ALhksZyUvXg5ZRz8/Oy5aJA8fFDM9XiUcBEs9Jj4GCGUPOzoJITMjMyU+PV4gAAxC";
+
+    const DEFAULT_BASE_URL = decryptValue(ENCRYPTED_DEFAULT_BASE_URL);
+    const DEFAULT_TRANSLATION_ENDPOINT = decryptValue(ENCRYPTED_TRANSLATION_ENDPOINT);
+    const DEFAULT_IMAGE_ENDPOINT = decryptValue(ENCRYPTED_IMAGE_ENDPOINT);
+    const DEFAULT_TRANSLATION_API_KEY = decryptValue(ENCRYPTED_TRANSLATION_API_KEY);
+    const DEFAULT_IMAGE_API_KEY = decryptValue(ENCRYPTED_IMAGE_API_KEY);
+    const LANGUAGE_LABELS = {
+      zh: { label: "中文", prompt: "Chinese" },
+      en: { label: "英文", prompt: "English" },
+      ja: { label: "日文", prompt: "Japanese" },
+      ko: { label: "韩文", prompt: "Korean" }
+    };
+
+    const logOutput = document.getElementById("logOutput");
+    const stepper = document.getElementById("stepper");
+    const stepElements = Array.from(stepper.querySelectorAll(".step"));
+    const stepStates = stepElements.map(() => "pending");
+    const STEP_INDEX = {
+      PREP: 0,
+      TRANSLATION: 1,
+      FIRST_PASS: 2,
+      QUALITY: 3,
+      REWORK: 4,
+      FINAL: 5
+    };
+    const translationTableBody = document.getElementById("translationTableBody");
+    const translationTableWrapper = document.getElementById("translationTableWrapper");
+    const addTranslationRowBtn = document.getElementById("addTranslationRowBtn");
+    const editControls = document.getElementById("editControls");
+    const resumeEditingBtn = document.getElementById("resumeEditingBtn");
+    const cancelEditingBtn = document.getElementById("cancelEditingBtn");
+    const pauseAfterTranslationCheckbox = document.getElementById("pauseAfterTranslation");
+    const enableQualityCheckCheckbox = document.getElementById("enableQualityCheck");
+    const originalFigure = document.getElementById("originalFigure");
+    const originalImg = document.getElementById("originalImage");
+    const firstPassFigure = document.getElementById("firstPassFigure");
+    const firstPassImg = document.getElementById("firstPassImage");
+    const finalFigure = document.getElementById("finalFigure");
+    const finalImg = document.getElementById("finalImage");
+    const firstPassCaption = document.getElementById("firstPassCaption");
+    const finalCaption = document.getElementById("finalCaption");
+    const runBtn = document.getElementById("runBtn");
+    const retryStepBtn = document.getElementById("retryStepBtn");
+    const statusMessage = document.getElementById("statusMessage");
+    const paymentNotice = document.getElementById("paymentNotice");
+    const mediaLevelSelect = document.getElementById("mediaLevel");
+    const thinkingLevelSelect = document.getElementById("thinkingLevel");
+    const imageSizeSelect = document.getElementById("imageSize");
+    const imageInput = document.getElementById("imageInput");
+    const targetLanguageSelect = document.getElementById("targetLanguage");
+    const customLanguageInput = document.getElementById("customLanguage");
+    const translationInstructionsInput = document.getElementById("translationInstructions");
+    const glossaryTableBody = document.getElementById("glossaryTableBody");
+    const addGlossaryRowBtn = document.getElementById("addGlossaryRowBtn");
+    const importGlossaryBtn = document.getElementById("importGlossaryBtn");
+    const exportGlossaryBtn = document.getElementById("exportGlossaryBtn");
+    const importGlossaryInput = document.getElementById("importGlossaryInput");
+    const translationBaseUrlInput = document.getElementById("translationBaseUrl");
+    const translationEndpointInput = document.getElementById("translationEndpoint");
+    const translationKeyInput = document.getElementById("translationKey");
+    const imageModelSyncAll = document.getElementById("imageModelSyncAll");
+    const imageModelSyncBase = document.getElementById("imageModelSyncBase");
+    const imageModelSyncEndpoint = document.getElementById("imageModelSyncEndpoint");
+    const imageModelSyncKey = document.getElementById("imageModelSyncKey");
+    const imageBaseUrlInput = document.getElementById("imageBaseUrl");
+    const imageEndpointInput = document.getElementById("imageEndpoint");
+    const imageKeyInput = document.getElementById("imageKey");
+    const openBlendBtn = document.getElementById("openBlendBtn");
+    const blendModal = document.getElementById("blendModal");
+    const closeBlendModalBtn = document.getElementById("closeBlendModal");
+    const blendCanvas = document.getElementById("blendCanvas");
+    const blendCanvasContainer = document.querySelector(".blend-canvas-wrapper");
+    const blendPreviewContainer = document.querySelector(".blend-preview-wrapper");
+    const previewCanvas = document.getElementById("previewCanvas");
+    const brushPreview = document.createElement("div");
+    brushPreview.style.position = "absolute";
+    brushPreview.style.pointerEvents = "none";
+    brushPreview.style.border = "1px solid rgba(99,102,241,0.8)";
+    brushPreview.style.borderRadius = "50%";
+    brushPreview.style.transform = "translate(-50%, -50%)";
+    brushPreview.style.display = "none";
+    const brushSizeInput = document.getElementById("brushSize");
+    const brushSizeValue = document.getElementById("brushSizeValue");
+    const brushModeInputs = document.querySelectorAll("input[name='brushMode']");
+    const resetMaskBtn = document.getElementById("resetMaskBtn");
+    const downloadBlendBtn = document.getElementById("downloadBlendBtn");
+
+    let cachedImageBase64 = null;
+    let cachedImageMime = null;
+    let cachedImageSignature = null;
+    let currentTranslationEntries = [];
+    let isPausedForEditing = false;
+    let activePipelineState = null;
+    let blendWorkspace = null;
+    let maskCanvas = null;
+    let maskCtx = null;
+    let compositeCanvas = null;
+    let compositeCtx = null;
+    let isMaskDrawing = false;
+    let lastMaskPoint = null;
+    let currentBrushMode = "paint";
+    let retryHandler = null;
+
+    function log(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      logOutput.textContent += `[${timestamp}] ${message}\n`;
+      logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    function setStatus(text, isError = false) {
+      statusMessage.textContent = text;
+      statusMessage.style.color = isError ? "#dc2626" : "#2563eb";
+      if (paymentNotice) {
+        paymentNotice.classList.toggle("hidden", !isError);
+      }
+    }
+
+    function setRetryHandler(handler, label = "重试当前步骤") {
+      retryHandler = handler;
+      retryStepBtn.textContent = label;
+      retryStepBtn.classList.remove("hidden");
+      retryStepBtn.disabled = false;
+    }
+
+    function clearRetryHandler() {
+      retryHandler = null;
+      retryStepBtn.classList.add("hidden");
+      retryStepBtn.disabled = false;
+    }
+
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error("读取文件失败"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function getFileSignature(file) {
+      return `${file.name}-${file.size}-${file.lastModified}`;
+    }
+
+    function hideFigure(figure, img) {
+      figure.classList.add("hidden");
+      img.removeAttribute("src");
+    }
+
+    function hideBlendButton() {
+      openBlendBtn.classList.add("hidden");
+    }
+
+    function showBlendButtonIfReady() {
+      if (originalImg.src && finalImg.src) {
+        openBlendBtn.classList.remove("hidden");
+      }
+    }
+
+    function resetImageDisplays() {
+      hideFigure(firstPassFigure, firstPassImg);
+      hideFigure(finalFigure, finalImg);
+      firstPassCaption.textContent = "第一轮嵌字图";
+      finalCaption.textContent = "最终成品图";
+      hideBlendButton();
+      closeBlendModal();
+      blendWorkspace = null;
+      maskCanvas = null;
+      maskCtx = null;
+      compositeCanvas = null;
+      compositeCtx = null;
+      isMaskDrawing = false;
+      lastMaskPoint = null;
+      activePipelineState = null;
+      clearRetryHandler();
+    }
+
+    async function handleImageSelection() {
+      const file = imageInput.files[0];
+      if (!file) {
+        cachedImageBase64 = null;
+        cachedImageMime = null;
+        cachedImageSignature = null;
+        originalImg.removeAttribute("src");
+        originalFigure.classList.add("hidden");
+        return;
+      }
+      try {
+        const dataUrl = await readFileAsDataURL(file);
+        cachedImageBase64 = dataUrl.split(",")[1];
+        cachedImageMime = file.type || "image/png";
+        cachedImageSignature = getFileSignature(file);
+        originalImg.src = dataUrl;
+        originalFigure.classList.remove("hidden");
+        setStatus("");
+      } catch (error) {
+        console.error(error);
+        setStatus("加载原始漫画失败，请重试。", true);
+      }
+    }
+
+    async function ensureImageData(file) {
+      const signature = getFileSignature(file);
+      if (cachedImageBase64 && signature === cachedImageSignature) {
+        return { base64: cachedImageBase64, mimeType: cachedImageMime || file.type || "image/png" };
+      }
+      const dataUrl = await readFileAsDataURL(file);
+      cachedImageBase64 = dataUrl.split(",")[1];
+      cachedImageMime = file.type || "image/png";
+      cachedImageSignature = signature;
+      originalImg.src = dataUrl;
+      originalFigure.classList.remove("hidden");
+      return { base64: cachedImageBase64, mimeType: cachedImageMime };
+    }
+
+    function closeBlendModal() {
+      if (!blendModal.classList.contains("hidden")) {
+        blendModal.classList.add("hidden");
+        document.body.classList.remove("modal-open");
+      }
+      isMaskDrawing = false;
+      lastMaskPoint = null;
+      hideBrushPreview();
+    }
+
+    function loadImageElement(src) {
+      return new Promise((resolve, reject) => {
+        if (!src) {
+          reject(new Error("缺少图像数据"));
+          return;
+        }
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("图像加载失败，请稍后重试。"));
+        img.src = src;
+      });
+    }
+
+    function setupBlendWorkspace(originalImage, finalImage, width, height) {
+      blendWorkspace = { originalImage, finalImage, width, height };
+      const maxDisplayWidth = Math.min(720, window.innerWidth ? window.innerWidth - 200 : 720);
+      const maxDisplayHeight = Math.min(800, window.innerHeight ? window.innerHeight - 240 : 800);
+      const scale = Math.min(
+        1,
+        maxDisplayWidth / width,
+        maxDisplayHeight / height
+      );
+      blendCanvas.width = width;
+      blendCanvas.height = height;
+      previewCanvas.width = width;
+      previewCanvas.height = height;
+      blendCanvas.style.width = `${width * scale}px`;
+      blendCanvas.style.height = `${height * scale}px`;
+      previewCanvas.style.width = `${width * scale}px`;
+      previewCanvas.style.height = `${height * scale}px`;
+      if (blendCanvasContainer) {
+        blendCanvasContainer.style.width = `${width * scale}px`;
+      }
+      if (blendPreviewContainer) {
+        blendPreviewContainer.style.width = `${width * scale}px`;
+      }
+
+      const needNewMask = !maskCanvas || maskCanvas.width !== width || maskCanvas.height !== height;
+      if (needNewMask) {
+        maskCanvas = document.createElement("canvas");
+        maskCanvas.width = width;
+        maskCanvas.height = height;
+        maskCtx = maskCanvas.getContext("2d");
+        maskCtx.clearRect(0, 0, width, height);
+      } else {
+        maskCtx = maskCanvas.getContext("2d");
+      }
+
+      compositeCanvas = document.createElement("canvas");
+      compositeCanvas.width = width;
+      compositeCanvas.height = height;
+      compositeCtx = compositeCanvas.getContext("2d");
+
+      renderBlendCanvas();
+      renderPreviewCanvas();
+    }
+
+    function renderBlendCanvas() {
+      if (!blendWorkspace) return;
+      const { width, height, originalImage, finalImage } = blendWorkspace;
+      const ctx = blendCanvas.getContext("2d");
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(originalImage, 0, 0, width, height);
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.drawImage(finalImage, 0, 0, width, height);
+      ctx.restore();
+      if (maskCanvas) {
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.drawImage(maskCanvas, 0, 0, width, height);
+        ctx.restore();
+      }
+    }
+
+    function renderPreviewCanvas() {
+      if (!blendWorkspace) return;
+      const { width, height, originalImage, finalImage } = blendWorkspace;
+      const ctx = previewCanvas.getContext("2d");
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(originalImage, 0, 0, width, height);
+      if (maskCanvas && compositeCtx) {
+        compositeCtx.globalCompositeOperation = "source-over";
+        compositeCtx.clearRect(0, 0, width, height);
+        compositeCtx.drawImage(maskCanvas, 0, 0, width, height);
+        compositeCtx.globalCompositeOperation = "source-in";
+        compositeCtx.drawImage(finalImage, 0, 0, width, height);
+        compositeCtx.globalCompositeOperation = "source-over";
+        ctx.drawImage(compositeCanvas, 0, 0, width, height);
+      }
+    }
+
+    function updateBrushSizeLabel() {
+      brushSizeValue.textContent = `${brushSizeInput.value}px`;
+      if (brushPreview.style.display !== "none") {
+        const size = `${brushSizeInput.value}px`;
+        brushPreview.style.width = size;
+        brushPreview.style.height = size;
+      }
+    }
+
+    function getCanvasCoordinates(event) {
+      const rect = blendCanvas.getBoundingClientRect();
+      const scaleX = blendCanvas.width / rect.width;
+      const scaleY = blendCanvas.height / rect.height;
+      return {
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY
+      };
+    }
+
+    function updateBrushPreview(event) {
+      if (!blendWorkspace || !blendCanvasContainer) return;
+      const rect = blendCanvas.getBoundingClientRect();
+      const containerRect = blendCanvasContainer.getBoundingClientRect();
+      const size = parseInt(brushSizeInput.value, 10) || 20;
+      const relativeX = Math.min(Math.max(event.clientX - containerRect.left, 0), containerRect.width);
+      const relativeY = Math.min(Math.max(event.clientY - containerRect.top, 0), containerRect.height);
+      brushPreview.style.width = `${size}px`;
+      brushPreview.style.height = `${size}px`;
+      brushPreview.style.left = `${relativeX}px`;
+      brushPreview.style.top = `${relativeY}px`;
+      brushPreview.style.display = "block";
+    }
+
+    function hideBrushPreview() {
+      brushPreview.style.display = "none";
+    }
+
+    function drawOnMask(position, continueStroke) {
+      if (!maskCtx) return;
+      const ctx = maskCtx;
+      const size = parseInt(brushSizeInput.value, 10) || 20;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = size;
+      ctx.globalCompositeOperation = currentBrushMode === "paint" ? "source-over" : "destination-out";
+      ctx.strokeStyle = "rgba(255,255,255,1)";
+      ctx.beginPath();
+      if (continueStroke && lastMaskPoint) {
+        ctx.moveTo(lastMaskPoint.x, lastMaskPoint.y);
+      } else {
+        ctx.moveTo(position.x, position.y);
+      }
+      ctx.lineTo(position.x, position.y);
+      ctx.stroke();
+      lastMaskPoint = { ...position };
+      renderBlendCanvas();
+      renderPreviewCanvas();
+    }
+
+    function handlePointerDown(event) {
+      if (!blendWorkspace) return;
+      isMaskDrawing = true;
+      blendCanvas.setPointerCapture(event.pointerId);
+      const pos = getCanvasCoordinates(event);
+      drawOnMask(pos, false);
+      event.preventDefault();
+    }
+
+    function handlePointerMove(event) {
+      if (!blendWorkspace) return;
+      updateBrushPreview(event);
+      if (!isMaskDrawing) return;
+      const pos = getCanvasCoordinates(event);
+      drawOnMask(pos, true);
+      event.preventDefault();
+    }
+
+    function handlePointerUp(event) {
+      if (isMaskDrawing) {
+        try {
+          blendCanvas.releasePointerCapture(event.pointerId);
+        } catch (_) {
+          /* ignore */
+        }
+      }
+      isMaskDrawing = false;
+      lastMaskPoint = null;
+      hideBrushPreview();
+    }
+
+    function resetMask() {
+      if (!maskCtx || !maskCanvas) return;
+      maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+      renderBlendCanvas();
+      renderPreviewCanvas();
+    }
+
+    async function openBlendEditor() {
+      if (!originalImg.src || !finalImg.src) {
+        setStatus("请先生成成品图，再尝试融合。", true);
+        return;
+      }
+      openBlendBtn.disabled = true;
+      try {
+        const [originalImage, finalImage] = await Promise.all([
+          loadImageElement(originalImg.src),
+          loadImageElement(finalImg.src)
+        ]);
+        const width = finalImage.naturalWidth || originalImage.naturalWidth;
+        const height = finalImage.naturalHeight || originalImage.naturalHeight;
+        if (!width || !height) {
+          throw new Error("无法获取图像尺寸。");
+        }
+        setupBlendWorkspace(originalImage, finalImage, width, height);
+        blendModal.classList.remove("hidden");
+        document.body.classList.add("modal-open");
+      } catch (error) {
+        console.error(error);
+        setStatus(error.message || "融合编辑器初始化失败。", true);
+      } finally {
+        openBlendBtn.disabled = false;
+      }
+    }
+
+    function downloadBlendResult() {
+      if (!blendWorkspace) return;
+      const dataUrl = previewCanvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = "manga_blend.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function normalizeBaseUrl(value, fallback = DEFAULT_BASE_URL) {
+      const base = (value && value.trim()) || fallback || "";
+      return base.replace(/\/+$/, "");
+    }
+
+    function normalizeEndpoint(value, fallback) {
+      const path = (value && value.trim()) || fallback || "";
+      if (!path) {
+        return "";
+      }
+      return path.startsWith("/") ? path : `/${path}`;
+    }
+
+    function getTranslationConfig() {
+      const apiKey = translationKeyInput.value.trim() || DEFAULT_TRANSLATION_API_KEY;
+      return {
+        baseUrl: normalizeBaseUrl(translationBaseUrlInput.value, DEFAULT_BASE_URL),
+        endpoint: normalizeEndpoint(translationEndpointInput.value, DEFAULT_TRANSLATION_ENDPOINT),
+        apiKey
+      };
+    }
+
+    function getImageConfig(translationConfig) {
+      const useBase = imageModelSyncBase.checked;
+      const useEndpoint = imageModelSyncEndpoint.checked;
+      const useKey = imageModelSyncKey.checked;
+      const imageKey = imageKeyInput.value.trim() || DEFAULT_IMAGE_API_KEY;
+      return {
+        baseUrl: useBase ? translationConfig.baseUrl : normalizeBaseUrl(imageBaseUrlInput.value, DEFAULT_BASE_URL),
+        endpoint: useEndpoint ? translationConfig.endpoint : normalizeEndpoint(imageEndpointInput.value, DEFAULT_IMAGE_ENDPOINT),
+        apiKey: useKey ? translationConfig.apiKey : imageKey
+      };
+    }
+
+    function extractParts(response) {
+      return response?.candidates?.[0]?.content?.parts ?? [];
+    }
+
+    function extractTextFromParts(parts) {
+      return parts
+        .map((part) => part?.text?.trim())
+        .filter(Boolean)
+        .join("\n")
+        .trim();
+    }
+
+    function extractImageInlineData(parts) {
+      for (const part of parts) {
+        if (part.inlineData && part.inlineData.data) {
+          return {
+            data: part.inlineData.data,
+            mimeType: part.inlineData.mimeType || "image/png"
+          };
+        }
+      }
+      return null;
+    }
+
+    function parseQualityResponse(text) {
+      const lines = text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      const statusIdx = lines.findIndex((line) => line.toUpperCase().startsWith("STATUS:"));
+      if (statusIdx === -1) {
+        throw new Error(`质检返回格式异常：${text}`);
+      }
+      const statusLine = lines[statusIdx].toUpperCase();
+      if (statusLine.startsWith("STATUS: OK")) {
+        return { status: "ok", revised: null };
+      }
+      if (statusLine.startsWith("STATUS: REVISE")) {
+        const revised = lines.slice(statusIdx + 1).join("\n").trim();
+        return { status: "revise", revised: revised || null };
+      }
+      throw new Error(`未知的 STATUS：${statusLine}`);
+    }
+
+    function addGlossaryRow(source = "", target = "") {
+      const tr = document.createElement("tr");
+      const sourceTd = document.createElement("td");
+      const targetTd = document.createElement("td");
+      const actionTd = document.createElement("td");
+
+      const sourceInput = document.createElement("input");
+      sourceInput.type = "text";
+      sourceInput.value = source;
+      sourceTd.appendChild(sourceInput);
+
+      const targetInput = document.createElement("input");
+      targetInput.type = "text";
+      targetInput.value = target;
+      targetTd.appendChild(targetInput);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "删除";
+      removeBtn.className = "btn secondary";
+      removeBtn.style.padding = "6px 10px";
+      removeBtn.addEventListener("click", () => tr.remove());
+      actionTd.appendChild(removeBtn);
+
+      tr.appendChild(sourceTd);
+      tr.appendChild(targetTd);
+      tr.appendChild(actionTd);
+
+      glossaryTableBody.appendChild(tr);
+    }
+
+    function getGlossaryPairs() {
+      const rows = Array.from(glossaryTableBody.querySelectorAll("tr"));
+      return rows
+        .map((row) => {
+          const inputs = row.querySelectorAll("input");
+          return {
+            source: inputs[0]?.value.trim() || "",
+            target: inputs[1]?.value.trim() || ""
+          };
+        })
+        .filter((pair) => pair.source && pair.target);
+    }
+
+    function clearGlossaryTable() {
+      glossaryTableBody.innerHTML = "";
+    }
+
+    function glossaryToBullets(glossaryPairs) {
+      if (!glossaryPairs.length) return "";
+      return glossaryPairs.map((pair) => `- ${pair.source} => ${pair.target}`).join("\n");
+    }
+
+    function parseCsvValues(line) {
+      const values = [];
+      let current = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i += 1) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === "," && !inQuotes) {
+          values.push(current.trim());
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim());
+      return values;
+    }
+
+    function parseGlossaryCsv(text) {
+      const lines = text.split(/\r?\n/);
+      const pairs = [];
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith("#")) continue;
+        const [source = "", target = ""] = parseCsvValues(line);
+        if (source && target) {
+          pairs.push({ source, target });
+        }
+      }
+      return pairs;
+    }
+
+    function escapeCsv(value) {
+      const safe = value.replace(/"/g, '""');
+      return `"${safe}"`;
+    }
+
+    function buildGlossaryCsv(pairs) {
+      if (!pairs.length) {
+        return [
+          "# 示例 CSV：source,target",
+          "# 以下演示如何填写术语表",
+          "シルヴェスタ,希尔维斯特",
+          "DOCO's,DOCO's"
+        ].join("\n");
+      }
+      const rows = ["source,target"];
+      pairs.forEach((pair) => {
+        rows.push(`${escapeCsv(pair.source)},${escapeCsv(pair.target)}`);
+      });
+      return rows.join("\n");
+    }
+
+    function buildTranslationPromptText(languageName, languageCode, instructions, glossaryPairs) {
+      const languageDescriptor = languageCode ? `${languageName}（ISO 639-1: ${languageCode}）` : languageName;
+      let prompt = [
+        "你是一名专业的漫画翻译。阅读这张漫画图片中的所有文字（包括拟声词/音效文字），按照气泡或文本块的顺序输出翻译结果。",
+        `目标语言：${languageDescriptor}。请确保所有译文都使用该语言。`,
+        "输出 `位置描述：原文 => 翻译` 的列表，用换行分隔。位置描述要明确文本的位置，比如位于画面的区域或角色旁。",
+        "不要描述画面，也不要新增内容。以遵循输出格式为第一要务。"
+      ].join("\n");
+      if (instructions) {
+        prompt += `\n额外要求：${instructions}`;
+      }
+      if (glossaryPairs.length) {
+        prompt += `\n术语表（优先使用以下译法）：\n${glossaryToBullets(glossaryPairs)}`;
+      }
+      return prompt;
+    }
+
+    function buildEditPromptText(languageName, translationText) {
+      return [
+        "你是一名漫画资深嵌字。请保持原始画面、构图和所有非文字元素不变，只替换文字内容，",
+        "使其与下列翻译一致。保持原字体风格、描边、颜色、排版与气泡布局，并按原始比例输出最终图像。",
+        `${languageName}翻译：`,
+        translationText
+      ].join("\n");
+    }
+
+    function buildQualityPromptText(languageName, languageCode, instructions, glossaryPairs) {
+      const languageDescriptor = languageCode ? `${languageName}（ISO 639-1: ${languageCode}）` : languageName;
+      let prompt = [
+        "你是一名漫画翻译质检。请根据这张漫画图片与下方的翻译列表，判断是否存在遗漏的文本（特别是拟声词/音效）",
+        "或翻译错误。如果一切准确完整，请输出 `STATUS: OK`。如果需要修正，请输出 `STATUS: REVISE`，并在下一行",
+        "给出修订后的完整翻译列表（格式同翻译家输出）。",
+        `目标翻译语言：${languageDescriptor}`
+      ].join("\n");
+      if (instructions) {
+        prompt += `\n翻译需求参考：${instructions}`;
+      }
+      if (glossaryPairs.length) {
+        prompt += `\n请遵循以下术语表：\n${glossaryToBullets(glossaryPairs)}`;
+      }
+      return prompt;
+    }
+
+    function parseTranslationEntries(text) {
+      const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+      const entries = [];
+      const regex = /^(.*?)[:：]\s*(.*?)\s*=>\s*(.+)$/;
+      lines.forEach((line) => {
+        const match = line.match(regex);
+        if (match) {
+          entries.push({
+            label: match[1].trim(),
+            source: match[2].trim(),
+            target: match[3].trim()
+          });
+        } else {
+          entries.push({
+            label: "",
+            source: line,
+            target: ""
+          });
+        }
+      });
+      return entries;
+    }
+
+    function buildTranslationTextFromEntries(entries) {
+      return entries
+        .filter((entry) => entry.label || entry.source || entry.target)
+        .map((entry) => {
+          const label = entry.label || "位置";
+          const source = entry.source || "";
+          const target = entry.target || "";
+          return `${label}：${source} => ${target}`;
+        })
+        .join("\n");
+    }
+
+    function createTranslationRow(entry, editable) {
+      const tr = document.createElement("tr");
+      const labelInput = document.createElement("input");
+      labelInput.type = "text";
+      labelInput.value = entry.label || "";
+      labelInput.readOnly = !editable;
+
+      const sourceInput = document.createElement("input");
+      sourceInput.type = "text";
+      sourceInput.value = entry.source || "";
+      sourceInput.readOnly = !editable;
+
+      const targetInput = document.createElement("input");
+      targetInput.type = "text";
+      targetInput.value = entry.target || "";
+      targetInput.readOnly = !editable;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "删除";
+      removeBtn.className = "btn secondary remove-translation-btn";
+      removeBtn.style.padding = "6px 10px";
+      removeBtn.addEventListener("click", () => tr.remove());
+      if (!editable) {
+        removeBtn.classList.add("hidden");
+      }
+
+      const appendCell = (content) => {
+        const td = document.createElement("td");
+        td.appendChild(content);
+        tr.appendChild(td);
+      };
+
+      appendCell(labelInput);
+      appendCell(sourceInput);
+      appendCell(targetInput);
+      const actionTd = document.createElement("td");
+      actionTd.appendChild(removeBtn);
+      tr.appendChild(actionTd);
+
+      return tr;
+    }
+
+    function renderTranslationTable(entries, editable) {
+      translationTableBody.innerHTML = "";
+      const list = entries.length ? entries : [{ label: "", source: "", target: "" }];
+      list.forEach((entry) => {
+        translationTableBody.appendChild(createTranslationRow(entry, editable));
+      });
+      currentTranslationEntries = list;
+      translationTableWrapper.classList.remove("hidden");
+      setTranslationEditingMode(editable);
+    }
+
+    function collectTranslationEntries() {
+      const rows = Array.from(translationTableBody.querySelectorAll("tr"));
+      return rows
+        .map((row) => {
+          const inputs = row.querySelectorAll("input");
+          return {
+            label: inputs[0]?.value.trim() || "",
+            source: inputs[1]?.value.trim() || "",
+            target: inputs[2]?.value.trim() || ""
+          };
+        })
+        .filter((entry) => entry.label || entry.source || entry.target);
+    }
+
+    function setTranslationEditingMode(editable) {
+      const inputs = translationTableBody.querySelectorAll("input");
+      inputs.forEach((input) => {
+        input.readOnly = !editable;
+      });
+      const removeButtons = translationTableBody.querySelectorAll(".remove-translation-btn");
+      removeButtons.forEach((btn) => btn.classList.toggle("hidden", !editable));
+      addTranslationRowBtn.classList.toggle("hidden", !editable);
+      editControls.classList.toggle("hidden", !editable);
+      const actionHeader = document.getElementById("translationActionHeader");
+      if (actionHeader) {
+        actionHeader.classList.toggle("hidden", !editable);
+      }
+    }
+
+    function addTranslationRow(entry = { label: "", source: "", target: "" }) {
+      const row = createTranslationRow(entry, true);
+      translationTableBody.appendChild(row);
+    }
+
+    function resetTranslationTable() {
+      translationTableBody.innerHTML = "";
+      translationTableWrapper.classList.add("hidden");
+      setTranslationEditingMode(false);
+    }
+
+    function buildTranslationPayload(promptText, base64, mime, mediaLevel, thinkingLevel) {
+      return {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: promptText },
+              {
+                inlineData: { mimeType: mime, data: base64 },
+                mediaResolution: { level: mediaLevel }
+              }
+            ]
+          }
+        ],
+        thinking_level: thinkingLevel
+      };
+    }
+
+    function buildImagePayload(editPrompt, base64, mime, mediaLevel, thinkingLevel, imageSize = "1K") {
+      return {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: editPrompt },
+              {
+                inlineData: { mimeType: mime, data: base64 },
+                mediaResolution: { level: mediaLevel }
+              }
+            ]
+          }
+        ],
+        thinking_level: thinkingLevel,
+        generationConfig: {
+          imageConfig: {
+            imageSize
+          }
+        }
+      };
+    }
+
+    function buildQualityPayload(promptText, translationText, base64, mime, mediaLevel, thinkingLevel) {
+      return {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: promptText },
+              {
+                inlineData: { mimeType: mime, data: base64 },
+                mediaResolution: { level: mediaLevel }
+              },
+              { text: `当前翻译：\n${translationText}` }
+            ]
+          }
+        ],
+        thinking_level: thinkingLevel
+      };
+    }
+
+    function createPipelineState(context, options = {}) {
+      return {
+        context,
+        translationPromptText: options.translationPromptText || "",
+        shouldPauseAfterTranslation: Boolean(options.shouldPauseAfterTranslation),
+        latestTranslations: options.latestTranslations || "",
+        translationEntries: options.translationEntries || [],
+        firstPassDataUrl: options.firstPassDataUrl || null,
+        firstPassInline: options.firstPassInline || null,
+        requireSecondPass: Boolean(options.requireSecondPass)
+      };
+    }
+
+    function getStageMeta(stage) {
+      switch (stage) {
+        case "translation":
+          return { button: "重试识别与翻译", running: "识别与翻译" };
+        case "firstPass":
+          return { button: "重试第一轮嵌字", running: "第一轮嵌字" };
+        case "quality":
+          return { button: "重试翻译质检", running: "翻译质检" };
+        case "final":
+          return { button: "重试最终成品", running: "最终成品生成" };
+        default:
+          return { button: "重试当前步骤", running: "当前步骤" };
+      }
+    }
+
+    function registerPipelineRetry(stage, state) {
+      const meta = getStageMeta(stage);
+      setRetryHandler(async () => {
+        if (!state) {
+          setStatus("当前没有可重试的步骤。", true);
+          return;
+        }
+        retryStepBtn.disabled = true;
+        runBtn.disabled = true;
+        setStatus(`正在${meta.running}，请稍候…`);
+        try {
+          if (stage === "translation") {
+            await runTranslationStage(state);
+          } else {
+            await runPostTranslationPipeline(state, stage);
+          }
+          clearRetryHandler();
+        } catch (error) {
+          console.error(error);
+          log(`错误：${error.message || error}`);
+          setStatus(error.message || "重试失败", true);
+        } finally {
+          retryStepBtn.disabled = false;
+          const keepDisabled = state.shouldPauseAfterTranslation && isPausedForEditing;
+          runBtn.disabled = keepDisabled;
+        }
+      }, meta.button);
+    }
+
+    function finalizeWithFirstPass(state, logMessage, options = {}) {
+      if (!state.firstPassDataUrl) {
+        throw new Error("缺少第一轮图像，无法直接出成品。");
+      }
+      finalImg.src = state.firstPassDataUrl;
+      finalFigure.classList.remove("hidden");
+      firstPassFigure.classList.add("hidden");
+      if (logMessage) {
+        log(logMessage);
+      }
+      setStatus("流程结束，第一轮即为成品！");
+      if (options.skipQuality) {
+        setStepState(STEP_INDEX.QUALITY, "skipped");
+      }
+      if (options.skipRework) {
+        setStepState(STEP_INDEX.REWORK, "skipped");
+      }
+      setStepState(STEP_INDEX.FINAL, "in-progress");
+      setStepState(STEP_INDEX.FINAL, "completed");
+      showBlendButtonIfReady();
+      clearRetryHandler();
+      runBtn.disabled = false;
+    }
+
+    async function runTranslationStage(state) {
+      const { context } = state;
+      const {
+        translationConfig,
+        base64,
+        mimeType,
+        mediaLevel,
+        thinkingLevel
+      } = context;
+      setStepState(STEP_INDEX.PREP, "completed");
+      setStepState(STEP_INDEX.TRANSLATION, "in-progress");
+      log("开始文字识别与翻译…");
+      const promptText = state.translationPromptText;
+      if (!promptText) {
+        throw new Error("缺少翻译提示词，无法继续。请重新开始。");
+      }
+      const translationPayload = buildTranslationPayload(
+        promptText,
+        base64,
+        mimeType,
+        mediaLevel,
+        thinkingLevel
+      );
+      const translationResponse = await callModel(translationConfig, translationPayload);
+      const translationText = extractTextFromParts(extractParts(translationResponse));
+      if (!translationText) {
+        throw new Error("翻译结果为空，可能识别失败。");
+      }
+      const entries = parseTranslationEntries(translationText);
+      state.latestTranslations = translationText;
+      state.translationEntries = entries;
+      renderTranslationTable(entries, state.shouldPauseAfterTranslation);
+      log("翻译完成。");
+      setStepState(STEP_INDEX.TRANSLATION, "completed");
+      if (state.shouldPauseAfterTranslation) {
+        isPausedForEditing = true;
+        setStatus("翻译已完成，可编辑后点击继续。");
+        runBtn.disabled = true;
+        clearRetryHandler();
+        return;
+      }
+      await runPostTranslationPipeline(state, "firstPass");
+    }
+
+    async function runPostTranslationPipeline(state, resumeStage = "firstPass") {
+      const { context } = state;
+      const {
+        translationConfig,
+        imageConfig,
+        base64,
+        mimeType,
+        mediaLevel,
+        thinkingLevel,
+        languageName,
+        languagePromptName,
+        languageCode,
+        translationInstructions,
+        glossaryPairs,
+        enableQualityCheck
+      } = context;
+      const stages = enableQualityCheck ? ["firstPass", "quality", "final"] : ["firstPass"];
+      const startIndex = stages.indexOf(resumeStage);
+      if (startIndex === -1) {
+        throw new Error("无法定位要重试的阶段。");
+      }
+
+      for (let i = startIndex; i < stages.length; i += 1) {
+        const stage = stages[i];
+        try {
+          if (stage === "firstPass") {
+            setStepState(STEP_INDEX.FIRST_PASS, "in-progress");
+            log("生成第一轮嵌字图…");
+            const firstPassPayload = buildImagePayload(
+              buildEditPromptText(languageName, state.latestTranslations),
+              base64,
+              mimeType,
+              mediaLevel,
+              thinkingLevel,
+              context.imageSize
+            );
+            const firstPassResponse = await callModel(imageConfig, firstPassPayload);
+            const firstPassInline = extractImageInlineData(extractParts(firstPassResponse));
+            if (!firstPassInline) {
+              throw new Error("第一轮嵌字图生成失败：响应中没有图像数据。");
+            }
+            const firstPassDataUrl = dataUrlFromInlineData(firstPassInline);
+            state.firstPassInline = firstPassInline;
+            state.firstPassDataUrl = firstPassDataUrl;
+            firstPassImg.src = firstPassDataUrl;
+            firstPassFigure.classList.remove("hidden");
+            log("第一轮嵌字图完成。");
+            setStepState(STEP_INDEX.FIRST_PASS, "completed");
+            if (!enableQualityCheck) {
+              finalizeWithFirstPass(state, "未启用质检，直接输出第一轮嵌字图作为成品。", {
+                skipQuality: true,
+                skipRework: true
+              });
+              return;
+            }
+          } else if (stage === "quality") {
+            setStepState(STEP_INDEX.QUALITY, "in-progress");
+            log("执行翻译质检…");
+            const qualityPromptText = buildQualityPromptText(languagePromptName, languageCode, translationInstructions, glossaryPairs);
+            const qualityPayload = buildQualityPayload(
+              qualityPromptText,
+              state.latestTranslations,
+              base64,
+              mimeType,
+              mediaLevel,
+              thinkingLevel
+            );
+            const qualityResponse = await callModel(translationConfig, qualityPayload);
+            const qualityText = extractTextFromParts(extractParts(qualityResponse));
+            const { status, revised } = parseQualityResponse(qualityText || "");
+            if (status === "revise" && revised) {
+              state.latestTranslations = revised;
+              const updatedEntries = parseTranslationEntries(revised);
+              renderTranslationTable(updatedEntries, false);
+              log("质检建议修订，已采用更新后的翻译。");
+              state.requireSecondPass = true;
+              setStepState(STEP_INDEX.QUALITY, "completed");
+            } else {
+              log("质检通过，无需二次翻译。");
+              state.requireSecondPass = false;
+              setStepState(STEP_INDEX.QUALITY, "completed");
+              finalizeWithFirstPass(state, "第一轮嵌字图通过质检，直接作为成品。", {
+                skipRework: true
+              });
+              return;
+            }
+          } else if (stage === "final") {
+            if (!state.requireSecondPass && resumeStage !== "final") {
+              continue;
+            }
+            setStepState(STEP_INDEX.REWORK, "in-progress");
+            setStepState(STEP_INDEX.FINAL, "in-progress");
+            log("生成最终成品图…");
+            const finalPayload = buildImagePayload(
+              buildEditPromptText(languageName, state.latestTranslations),
+              base64,
+              mimeType,
+              mediaLevel,
+              thinkingLevel,
+              context.imageSize
+            );
+            const finalResponse = await callModel(imageConfig, finalPayload);
+            const finalInline = extractImageInlineData(extractParts(finalResponse));
+            if (!finalInline) {
+              throw new Error("最终图像生成失败：响应中没有图像数据。");
+            }
+            finalImg.src = dataUrlFromInlineData(finalInline);
+            finalFigure.classList.remove("hidden");
+            log("完成！已生成最终汉化图。");
+            setStatus("流程结束，快来查看结果吧！");
+            setStepState(STEP_INDEX.REWORK, "completed");
+            setStepState(STEP_INDEX.FINAL, "completed");
+            showBlendButtonIfReady();
+            clearRetryHandler();
+            runBtn.disabled = false;
+            return;
+          }
+        } catch (error) {
+          console.error(error);
+          log(`错误：${error.message || error}`);
+          setStatus(error.message || "执行失败", true);
+          runBtn.disabled = false;
+          registerPipelineRetry(stage, state);
+          throw error;
+        }
+      }
+    }
+
+    function dataUrlFromInlineData(inlineData) {
+      return `data:${inlineData.mimeType};base64,${inlineData.data}`;
+    }
+
+    async function callModel(config, payload) {
+      const url = `${config.baseUrl}${config.endpoint}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${config.apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`请求失败 (${res.status}): ${text}`);
+      }
+      return res.json();
+    }
+
+    function applySyncState() {
+      const baseSynced = imageModelSyncAll.checked || imageModelSyncBase.checked;
+      const endpointSynced = imageModelSyncAll.checked || imageModelSyncEndpoint.checked;
+      const keySynced = imageModelSyncAll.checked || imageModelSyncKey.checked;
+      imageBaseUrlInput.disabled = baseSynced;
+      imageEndpointInput.disabled = endpointSynced;
+      imageKeyInput.disabled = keySynced;
+      imageBaseUrlInput.classList.toggle("hidden", baseSynced);
+      imageEndpointInput.classList.toggle("hidden", endpointSynced);
+      imageKeyInput.classList.toggle("hidden", keySynced);
+    }
+
+    function applyStepStates() {
+      stepElements.forEach((step, index) => {
+        const state = stepStates[index] || "pending";
+        step.classList.remove("pending", "in-progress", "completed", "skipped");
+        step.classList.add(state);
+      });
+    }
+
+    function setStepState(stepIndex, state) {
+      if (typeof stepIndex !== "number" || !stepElements[stepIndex]) {
+        return;
+      }
+      stepStates[stepIndex] = state;
+      applyStepStates();
+    }
+
+    function resetStepper() {
+      for (let i = 0; i < stepStates.length; i += 1) {
+        stepStates[i] = "pending";
+      }
+      applyStepStates();
+    }
+
+    async function runLocalization() {
+      logOutput.textContent = "";
+      resetTranslationTable();
+      setStatus("");
+      resetImageDisplays();
+      resetStepper();
+      isPausedForEditing = false;
+      activePipelineState = null;
+      clearRetryHandler();
+
+      const imageFile = imageInput.files[0];
+      if (!imageFile) {
+        setStatus("请先选择要汉化的漫画图片。", true);
+        return;
+      }
+
+      const translationConfig = getTranslationConfig();
+      const imageConfig = getImageConfig(translationConfig);
+
+      if (!translationConfig.apiKey) {
+        setStatus("请填写翻译模型 API Key。", true);
+        return;
+      }
+      if (!imageConfig.apiKey) {
+        setStatus("请填写图像模型 API Key。", true);
+        return;
+      }
+
+      runBtn.disabled = true;
+      setStatus("处理中，请稍候…");
+      setStepState(STEP_INDEX.PREP, "in-progress");
+
+      try {
+        const { base64, mimeType } = await ensureImageData(imageFile);
+        log(`已读取图片 (${imageFile.name}, ${mimeType})`);
+
+        const mediaLevel = mediaLevelSelect.value;
+        const thinkingLevel = thinkingLevelSelect.value;
+        const targetLanguage = targetLanguageSelect.value;
+        const customLanguage = customLanguageInput.value.trim();
+        const languageOption = LANGUAGE_LABELS[targetLanguage] || {};
+        const languageName = customLanguage || languageOption.label || targetLanguage;
+        const languagePromptName = customLanguage || languageOption.prompt || languageName;
+        const imageSize = imageSizeSelect.value || "1K";
+        const translationInstructions = translationInstructionsInput.value.trim();
+        const glossaryPairs = getGlossaryPairs();
+        const translationPromptText = buildTranslationPromptText(languagePromptName, targetLanguage, translationInstructions, glossaryPairs);
+        const enableQualityCheck = enableQualityCheckCheckbox.checked;
+        const shouldPause = pauseAfterTranslationCheckbox.checked;
+
+        const context = {
+          translationConfig,
+          imageConfig,
+          base64,
+          mimeType,
+          mediaLevel,
+          thinkingLevel,
+          languageName,
+          languagePromptName,
+          languageCode: targetLanguage,
+          imageSize,
+          translationInstructions,
+          glossaryPairs,
+          enableQualityCheck
+        };
+
+        activePipelineState = createPipelineState(context, {
+          translationPromptText,
+          shouldPauseAfterTranslation: shouldPause
+        });
+
+        await runTranslationStage(activePipelineState);
+      } catch (error) {
+        console.error(error);
+        log(`错误：${error.message || error}`);
+        setStatus(error.message || "执行失败", true);
+        if (!retryHandler && activePipelineState) {
+          registerPipelineRetry("translation", activePipelineState);
+        }
+        runBtn.disabled = false;
+      }
+    }
+
+    function syncAllToggle() {
+      if (imageModelSyncAll.checked) {
+        imageModelSyncBase.checked = true;
+        imageModelSyncEndpoint.checked = true;
+        imageModelSyncKey.checked = true;
+      }
+      applySyncState();
+    }
+
+    function handleIndividualToggle(box) {
+      if (!box.checked && imageModelSyncAll.checked) {
+        imageModelSyncAll.checked = false;
+      }
+      applySyncState();
+    }
+
+    function downloadCsv(filename, content) {
+      const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    imageModelSyncAll.addEventListener("change", syncAllToggle);
+    imageModelSyncBase.addEventListener("change", () => handleIndividualToggle(imageModelSyncBase));
+    imageModelSyncEndpoint.addEventListener("change", () => handleIndividualToggle(imageModelSyncEndpoint));
+    imageModelSyncKey.addEventListener("change", () => handleIndividualToggle(imageModelSyncKey));
+    applySyncState();
+
+    addGlossaryRowBtn.addEventListener("click", () => addGlossaryRow());
+    addTranslationRowBtn.addEventListener("click", () => {
+      if (isPausedForEditing) {
+        addTranslationRow();
+      }
+    });
+    importGlossaryBtn.addEventListener("click", () => importGlossaryInput.click());
+    importGlossaryInput.addEventListener("change", async () => {
+      const file = importGlossaryInput.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const pairs = parseGlossaryCsv(text);
+        clearGlossaryTable();
+        if (!pairs.length) {
+          addGlossaryRow();
+          setStatus("导入的 CSV 没有有效术语，已保留空行。");
+        } else {
+          pairs.forEach((pair) => addGlossaryRow(pair.source, pair.target));
+          setStatus(`成功导入 ${pairs.length} 条术语。`);
+        }
+      } catch (error) {
+        console.error(error);
+        setStatus("导入 CSV 失败，请确认文件格式。", true);
+      } finally {
+        importGlossaryInput.value = "";
+      }
+    });
+    exportGlossaryBtn.addEventListener("click", () => {
+      const pairs = getGlossaryPairs();
+      const csv = buildGlossaryCsv(pairs);
+      downloadCsv("manga_glossary.csv", csv);
+      setStatus("已导出术语表 CSV。");
+    });
+    resumeEditingBtn.addEventListener("click", async () => {
+      if (!activePipelineState) {
+        setStatus("当前没有可继续的任务。", true);
+        return;
+      }
+      const entries = collectTranslationEntries();
+      if (!entries.length) {
+        setStatus("请至少保留一条翻译记录。", true);
+        return;
+      }
+      const translationText = buildTranslationTextFromEntries(entries);
+      renderTranslationTable(entries, false);
+      activePipelineState.latestTranslations = translationText;
+      activePipelineState.translationEntries = entries;
+      isPausedForEditing = false;
+      runBtn.disabled = true;
+      clearRetryHandler();
+      setStatus("继续生成中…");
+      try {
+        await runPostTranslationPipeline(activePipelineState, "firstPass");
+      } catch (error) {
+        console.error(error);
+        setStatus(error.message || "继续流程失败。", true);
+        runBtn.disabled = false;
+      }
+    });
+    cancelEditingBtn.addEventListener("click", () => {
+      activePipelineState = null;
+      isPausedForEditing = false;
+      resetTranslationTable();
+      setStatus("已取消编辑，请重新运行流程。", true);
+      runBtn.disabled = false;
+      clearRetryHandler();
+    });
+    if (!glossaryTableBody.children.length) {
+      addGlossaryRow();
+    }
+
+    imageInput.addEventListener("change", () => {
+      handleImageSelection();
+      resetImageDisplays();
+      logOutput.textContent = "";
+      resetTranslationTable();
+      setStatus("");
+    });
+
+    retryStepBtn.addEventListener("click", () => {
+      if (typeof retryHandler === "function") {
+        retryHandler();
+      }
+    });
+
+    runBtn.addEventListener("click", runLocalization);
+    openBlendBtn.addEventListener("click", openBlendEditor);
+    closeBlendModalBtn.addEventListener("click", closeBlendModal);
+    blendModal.addEventListener("click", (event) => {
+      if (event.target === blendModal) {
+        closeBlendModal();
+      }
+    });
+    brushSizeInput.addEventListener("input", updateBrushSizeLabel);
+    brushModeInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        if (input.checked) {
+          currentBrushMode = input.value;
+        }
+      });
+    });
+    resetMaskBtn.addEventListener("click", resetMask);
+    downloadBlendBtn.addEventListener("click", downloadBlendResult);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeBlendModal();
+      }
+    });
+    blendCanvas.addEventListener("pointerdown", handlePointerDown);
+    blendCanvas.addEventListener("pointermove", handlePointerMove);
+    ["pointerup", "pointerleave", "pointercancel"].forEach((type) => {
+      blendCanvas.addEventListener(type, handlePointerUp);
+    });
+    blendCanvas.addEventListener("pointerenter", (event) => {
+      updateBrushPreview(event);
+    });
+    blendCanvas.addEventListener("pointerleave", () => {
+      hideBrushPreview();
+    });
+    if (blendCanvasContainer) {
+      blendCanvasContainer.style.position = "relative";
+      blendCanvasContainer.appendChild(brushPreview);
+    }
+    updateBrushSizeLabel();
+  </script>
+
+  <section class="card" style="margin-top: 24px;">
+    <h2>关于与免责声明</h2>
+    <p style="margin: 0;">
+      本工具仅供学习与技术交流，使用者需遵守中国大陆法律法规，不得将其用于任何非法或侵权用途。
+      若产生侵权内容，请立即停止使用并删除相关材料，我们将配合依法处理。
+    </p>
+  </section>
+</body>
+</html>
