@@ -716,6 +716,7 @@
         <figcaption id="finalCaption">最终成品图</figcaption>
         <img id="finalImage" alt="最终图像尚未生成" />
         <button type="button" class="btn secondary image-download-btn hidden" id="downloadFinalImageBtn">下载成品图</button>
+        <button type="button" class="btn secondary image-download-btn hidden" id="returnToEditingBtn">回到翻译润色</button>
       </figure>
     </div>
     <button type="button" class="btn hidden" id="openBlendBtn">成品融合微调</button>
@@ -841,6 +842,7 @@
     const finalFigure = document.getElementById("finalFigure");
     const finalImg = document.getElementById("finalImage");
     const downloadFinalImageBtn = document.getElementById("downloadFinalImageBtn");
+    const returnToEditingBtn = document.getElementById("returnToEditingBtn");
     const firstPassCaption = document.getElementById("firstPassCaption");
     const finalCaption = document.getElementById("finalCaption");
     const runBtn = document.getElementById("runBtn");
@@ -900,6 +902,7 @@
     let currentTranslationEntries = [];
     let isPausedForEditing = false;
     let activePipelineState = null;
+    let editingOrigin = null;
     let blendWorkspace = null;
     let maskCanvas = null;
     let maskCtx = null;
@@ -970,12 +973,38 @@
       }
     }
 
+    function hideReturnToEditingButton() {
+      if (returnToEditingBtn) {
+        returnToEditingBtn.classList.add("hidden");
+        returnToEditingBtn.disabled = false;
+      }
+    }
+
+    function showReturnToEditingButton() {
+      if (!returnToEditingBtn || isPausedForEditing) {
+        return;
+      }
+      if (!activePipelineState) {
+        returnToEditingBtn.classList.add("hidden");
+        return;
+      }
+      const hasEntries = Boolean(
+        (activePipelineState.translationEntries && activePipelineState.translationEntries.length) ||
+          currentTranslationEntries.length
+      );
+      if (hasEntries) {
+        returnToEditingBtn.classList.remove("hidden");
+        returnToEditingBtn.disabled = false;
+      }
+    }
+
     function resetImageDisplays() {
       hideFigure(firstPassFigure, firstPassImg, downloadFirstPassBtn);
       hideFigure(finalFigure, finalImg, downloadFinalImageBtn);
       firstPassCaption.textContent = "第一轮嵌字图";
       finalCaption.textContent = "最终成品图";
       hideBlendButton();
+      hideReturnToEditingButton();
       closeBlendModal();
       blendWorkspace = null;
       maskCanvas = null;
@@ -1837,6 +1866,33 @@
       setTranslationEditingMode(false);
     }
 
+    function reopenTranslationEditing() {
+      if (!activePipelineState) {
+        setStatus("当前没有可回退的翻译记录。", true);
+        return;
+      }
+      const entries =
+        (activePipelineState.translationEntries && activePipelineState.translationEntries.length
+          ? activePipelineState.translationEntries
+          : collectTranslationEntries());
+      if (!entries.length) {
+        setStatus("当前没有翻译内容，请重新运行流程。", true);
+        return;
+      }
+      log("返回翻译润色阶段，等待用户调整…");
+      editingOrigin = "reopen";
+      isPausedForEditing = true;
+      runBtn.disabled = true;
+      hideReturnToEditingButton();
+      clearRetryHandler();
+      renderTranslationTable(entries, true);
+      setStatus("已回到翻译润色阶段，修改后点击「完成编辑」继续。");
+      setStepState(STEP_INDEX.FIRST_PASS, "pending");
+      setStepState(STEP_INDEX.QUALITY, "pending");
+      setStepState(STEP_INDEX.REWORK, "pending");
+      setStepState(STEP_INDEX.FINAL, "pending");
+    }
+
     function buildTranslationPayload(promptText, base64, mime, mediaLevel, thinkingLevel) {
       return {
         contents: [
@@ -1989,6 +2045,7 @@
       setStepState(STEP_INDEX.FINAL, "in-progress");
       setStepState(STEP_INDEX.FINAL, "completed");
       showBlendButtonIfReady();
+      showReturnToEditingButton();
       clearRetryHandler();
       runBtn.disabled = false;
     }
@@ -2029,6 +2086,7 @@
       log("翻译完成。");
       setStepState(STEP_INDEX.TRANSLATION, "completed");
       if (state.shouldPauseAfterTranslation) {
+        editingOrigin = "initial";
         isPausedForEditing = true;
         setStatus("翻译已完成，可编辑后点击继续。");
         runBtn.disabled = true;
@@ -2160,6 +2218,7 @@
             setStepState(STEP_INDEX.REWORK, "completed");
             setStepState(STEP_INDEX.FINAL, "completed");
             showBlendButtonIfReady();
+            showReturnToEditingButton();
             clearRetryHandler();
             runBtn.disabled = false;
             return;
@@ -2240,6 +2299,7 @@
       resetStepper();
       isPausedForEditing = false;
       activePipelineState = null;
+      editingOrigin = null;
       clearRetryHandler();
 
       const imageFile = imageInput.files[0];
@@ -2403,6 +2463,11 @@
         downloadDataUrl(latestFinalDataUrl, "final_image");
       });
     }
+    if (returnToEditingBtn) {
+      returnToEditingBtn.addEventListener("click", () => {
+        reopenTranslationEditing();
+      });
+    }
     resumeEditingBtn.addEventListener("click", async () => {
       if (!activePipelineState) {
         setStatus("当前没有可继续的任务。", true);
@@ -2418,6 +2483,7 @@
       activePipelineState.latestTranslations = translationText;
       activePipelineState.translationEntries = entries;
       isPausedForEditing = false;
+      editingOrigin = null;
       runBtn.disabled = true;
       clearRetryHandler();
       setStatus("继续生成中…");
@@ -2430,12 +2496,31 @@
       }
     });
     cancelEditingBtn.addEventListener("click", () => {
+      if (editingOrigin === "reopen") {
+        editingOrigin = null;
+        isPausedForEditing = false;
+        const entries =
+          (activePipelineState?.translationEntries && activePipelineState.translationEntries.length
+            ? activePipelineState.translationEntries
+            : collectTranslationEntries());
+        if (entries.length) {
+          renderTranslationTable(entries, false);
+        } else {
+          resetTranslationTable();
+        }
+        setStatus("已退出润色，当前成品保持不变。");
+        runBtn.disabled = false;
+        showReturnToEditingButton();
+        return;
+      }
       activePipelineState = null;
       isPausedForEditing = false;
+      editingOrigin = null;
       resetTranslationTable();
       setStatus("已取消编辑，请重新运行流程。", true);
       runBtn.disabled = false;
       clearRetryHandler();
+      hideReturnToEditingButton();
     });
     if (!glossaryTableBody.children.length) {
       addGlossaryRow();
