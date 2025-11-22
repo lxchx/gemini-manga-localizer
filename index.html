@@ -861,6 +861,9 @@
     const blendModal = document.getElementById("blendModal");
     const closeBlendModalBtn = document.getElementById("closeBlendModal");
     const blendCanvas = document.getElementById("blendCanvas");
+    if (blendCanvas) {
+      blendCanvas.style.touchAction = "none";
+    }
     const blendCanvasContainer = document.querySelector(".blend-canvas-wrapper");
     const blendPreviewContainer = document.querySelector(".blend-preview-wrapper");
     const previewCanvas = document.getElementById("previewCanvas");
@@ -1149,12 +1152,21 @@
       }
     }
 
+    function getBrushDisplaySize() {
+      const size = parseInt(brushSizeInput.value, 10) || 20;
+      if (!blendCanvas) return size;
+      const rect = blendCanvas.getBoundingClientRect();
+      if (!rect.width || !blendCanvas.width) return size;
+      const scale = rect.width / blendCanvas.width;
+      return Math.max(size * scale, 2);
+    }
+
     function updateBrushSizeLabel() {
       brushSizeValue.textContent = `${brushSizeInput.value}px`;
       if (brushPreview.style.display !== "none") {
-        const size = `${brushSizeInput.value}px`;
-        brushPreview.style.width = size;
-        brushPreview.style.height = size;
+        const displaySize = getBrushDisplaySize();
+        brushPreview.style.width = `${displaySize}px`;
+        brushPreview.style.height = `${displaySize}px`;
       }
     }
 
@@ -1172,11 +1184,11 @@
       if (!blendWorkspace || !blendCanvasContainer) return;
       const rect = blendCanvas.getBoundingClientRect();
       const containerRect = blendCanvasContainer.getBoundingClientRect();
-      const size = parseInt(brushSizeInput.value, 10) || 20;
+      const displaySize = getBrushDisplaySize();
       const relativeX = Math.min(Math.max(event.clientX - containerRect.left, 0), containerRect.width);
       const relativeY = Math.min(Math.max(event.clientY - containerRect.top, 0), containerRect.height);
-      brushPreview.style.width = `${size}px`;
-      brushPreview.style.height = `${size}px`;
+      brushPreview.style.width = `${displaySize}px`;
+      brushPreview.style.height = `${displaySize}px`;
       brushPreview.style.left = `${relativeX}px`;
       brushPreview.style.top = `${relativeY}px`;
       brushPreview.style.display = "block";
