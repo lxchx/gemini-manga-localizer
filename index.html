@@ -1531,8 +1531,7 @@
           description: "翻译内容"
         }
       },
-      required: ["label", "style", "color", "source", "target"],
-      additionalProperties: false
+      required: ["label", "style", "color", "source", "target"]
     };
 
     const TRANSLATION_RESPONSE_SCHEMA = {
@@ -1543,8 +1542,7 @@
           items: TRANSLATION_ENTRY_SCHEMA
         }
       },
-      required: ["entries"],
-      additionalProperties: false
+      required: ["entries"]
     };
 
     const QUALITY_RESPONSE_SCHEMA = {
@@ -1559,8 +1557,7 @@
           items: TRANSLATION_ENTRY_SCHEMA
         }
       },
-      required: ["status"],
-      additionalProperties: false
+      required: ["status"]
     };
 
     function buildTranslationPromptText(languageName, languageCode, instructions, glossaryPairs) {
