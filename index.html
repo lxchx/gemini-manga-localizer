@@ -124,6 +124,11 @@
       background: #fff;
       object-fit: contain;
     }
+    .image-download-btn {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px 12px;
+    }
     .hidden {
       display: none !important;
     }
@@ -703,10 +708,12 @@
       <figure id="firstPassFigure" class="hidden">
         <figcaption id="firstPassCaption">第一轮嵌字图</figcaption>
         <img id="firstPassImage" alt="第一轮图像尚未生成" />
+        <button type="button" class="btn secondary image-download-btn hidden" id="downloadFirstPassBtn">下载第一轮图</button>
       </figure>
       <figure id="finalFigure" class="hidden">
         <figcaption id="finalCaption">最终成品图</figcaption>
         <img id="finalImage" alt="最终图像尚未生成" />
+        <button type="button" class="btn secondary image-download-btn hidden" id="downloadFinalImageBtn">下载成品图</button>
       </figure>
     </div>
     <button type="button" class="btn hidden" id="openBlendBtn">成品融合微调</button>
@@ -815,8 +822,10 @@
     const originalImg = document.getElementById("originalImage");
     const firstPassFigure = document.getElementById("firstPassFigure");
     const firstPassImg = document.getElementById("firstPassImage");
+    const downloadFirstPassBtn = document.getElementById("downloadFirstPassBtn");
     const finalFigure = document.getElementById("finalFigure");
     const finalImg = document.getElementById("finalImage");
+    const downloadFinalImageBtn = document.getElementById("downloadFinalImageBtn");
     const firstPassCaption = document.getElementById("firstPassCaption");
     const finalCaption = document.getElementById("finalCaption");
     const runBtn = document.getElementById("runBtn");
@@ -880,6 +889,8 @@
     let lastMaskPoint = null;
     let currentBrushMode = "paint";
     let retryHandler = null;
+    let latestFirstPassDataUrl = null;
+    let latestFinalDataUrl = null;
 
     function log(message) {
       const timestamp = new Date().toLocaleTimeString();
@@ -921,9 +932,12 @@
       return `${file.name}-${file.size}-${file.lastModified}`;
     }
 
-    function hideFigure(figure, img) {
+    function hideFigure(figure, img, downloadBtn) {
       figure.classList.add("hidden");
       img.removeAttribute("src");
+      if (downloadBtn) {
+        downloadBtn.classList.add("hidden");
+      }
     }
 
     function hideBlendButton() {
@@ -937,8 +951,8 @@
     }
 
     function resetImageDisplays() {
-      hideFigure(firstPassFigure, firstPassImg);
-      hideFigure(finalFigure, finalImg);
+      hideFigure(firstPassFigure, firstPassImg, downloadFirstPassBtn);
+      hideFigure(finalFigure, finalImg, downloadFinalImageBtn);
       firstPassCaption.textContent = "第一轮嵌字图";
       finalCaption.textContent = "最终成品图";
       hideBlendButton();
@@ -952,6 +966,8 @@
       lastMaskPoint = null;
       activePipelineState = null;
       clearRetryHandler();
+      latestFirstPassDataUrl = null;
+      latestFinalDataUrl = null;
     }
 
     async function handleImageSelection() {
@@ -1000,6 +1016,20 @@
       isMaskDrawing = false;
       lastMaskPoint = null;
       hideBrushPreview();
+    }
+
+    function downloadDataUrl(dataUrl, filenamePrefix) {
+      if (!dataUrl) {
+        setStatus("当前没有可下载的图像。", true);
+        return;
+      }
+      const link = document.createElement("a");
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      link.href = dataUrl;
+      link.download = `${filenamePrefix}_${timestamp}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     function loadImageElement(src) {
@@ -1844,7 +1874,14 @@
       }
       finalImg.src = state.firstPassDataUrl;
       finalFigure.classList.remove("hidden");
+      latestFinalDataUrl = state.firstPassDataUrl;
+      if (downloadFinalImageBtn) {
+        downloadFinalImageBtn.classList.remove("hidden");
+      }
       firstPassFigure.classList.add("hidden");
+      if (downloadFirstPassBtn) {
+        downloadFirstPassBtn.classList.add("hidden");
+      }
       if (logMessage) {
         log(logMessage);
       }
@@ -1953,6 +1990,10 @@
             state.firstPassDataUrl = firstPassDataUrl;
             firstPassImg.src = firstPassDataUrl;
             firstPassFigure.classList.remove("hidden");
+            latestFirstPassDataUrl = firstPassDataUrl;
+            if (downloadFirstPassBtn) {
+              downloadFirstPassBtn.classList.remove("hidden");
+            }
             log("第一轮嵌字图完成。");
             setStepState(STEP_INDEX.FIRST_PASS, "completed");
             if (!enableQualityCheck) {
@@ -2013,8 +2054,13 @@
             if (!finalInline) {
               throw new Error("最终图像生成失败：响应中没有图像数据。");
             }
-            finalImg.src = dataUrlFromInlineData(finalInline);
+            const finalDataUrl = dataUrlFromInlineData(finalInline);
+            finalImg.src = finalDataUrl;
             finalFigure.classList.remove("hidden");
+            latestFinalDataUrl = finalDataUrl;
+            if (downloadFinalImageBtn) {
+              downloadFinalImageBtn.classList.remove("hidden");
+            }
             log("完成！已生成最终汉化图。");
             setStatus("流程结束，快来查看结果吧！");
             setStepState(STEP_INDEX.REWORK, "completed");
@@ -2242,6 +2288,24 @@
       downloadCsv("manga_glossary.csv", csv);
       setStatus("已导出术语表 CSV。");
     });
+    if (downloadFirstPassBtn) {
+      downloadFirstPassBtn.addEventListener("click", () => {
+        if (!latestFirstPassDataUrl) {
+          setStatus("当前没有第一轮图像可下载。", true);
+          return;
+        }
+        downloadDataUrl(latestFirstPassDataUrl, "first_pass");
+      });
+    }
+    if (downloadFinalImageBtn) {
+      downloadFinalImageBtn.addEventListener("click", () => {
+        if (!latestFinalDataUrl) {
+          setStatus("当前没有成品图可下载。", true);
+          return;
+        }
+        downloadDataUrl(latestFinalDataUrl, "final_image");
+      });
+    }
     resumeEditingBtn.addEventListener("click", async () => {
       if (!activePipelineState) {
         setStatus("当前没有可继续的任务。", true);
