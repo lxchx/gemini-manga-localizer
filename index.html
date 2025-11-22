@@ -679,16 +679,18 @@
   <section class="card" id="translationResultCard">
     <h2>翻译结果</h2>
     <div id="translationTableWrapper" class="hidden">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">位置描述</th>
-            <th style="width: 35%;">原文</th>
-            <th style="width: 35%;">翻译</th>
-            <th style="width: 5%;">操作</th>
-          </tr>
-        </thead>
-        <tbody id="translationTableBody"></tbody>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 20%;">位置描述</th>
+                <th style="width: 18%;">字体/风格</th>
+                <th style="width: 17%;">颜色</th>
+                <th style="width: 25%;">原文</th>
+                <th style="width: 20%;">翻译</th>
+                <th style="width: 5%;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="translationTableBody"></tbody>
       </table>
       <button type="button" class="btn wide-add-btn hidden" id="addTranslationRowBtn">+ 新增条目</button>
     </div>
@@ -1500,6 +1502,14 @@
           type: "string",
           description: "能够精准定位文字的描述。复杂画面需包含画面编号、角色身份或特征、相对方位、文字类型（气泡/旁白/拟声词等）、字体风格与颜色等，多重信息共同确定位置；简单布局可相应简化。"
         },
+        style: {
+          type: "string",
+          description: "字体或风格特征（必须填写），例如“手写体”“粗体”“描边白字”等"
+        },
+        color: {
+          type: "string",
+          description: "文字及描边颜色信息（必须填写），例如“白字黑描边”"
+        },
         source: {
           type: "string",
           description: "检测到的原文"
@@ -1509,7 +1519,7 @@
           description: "翻译内容"
         }
       },
-      required: ["source", "target"],
+      required: ["label", "style", "color", "source", "target"],
       additionalProperties: false
     };
 
@@ -1546,8 +1556,8 @@
       let prompt = [
         "你是一名专业的漫画翻译。阅读这张漫画图片中的所有文字（包括拟声词/音效文字），按照气泡或文本块的顺序输出翻译结果。",
         `目标语言：${languageDescriptor}。请确保所有译文都使用该语言。`,
-        "请严格输出 JSON 对象 { \"entries\": [{\"label\": \"位置描述\", \"source\": \"原文\", \"target\": \"译文\"}, ...] }，不得添加任何额外字段或文字。",
-        "label 必须使用能够精准定位文字的描述：复杂画面需写明画面编号、关联角色或物体、相对方位以及文字类型/风格/颜色等信息；简单布局可适当简化，但不得只写“左上角”等笼统方向。",
+        "请严格输出 JSON 对象 { \"entries\": [{\"label\": \"位置描述\", \"style\": \"字体风格\", \"color\": \"颜色信息\", \"source\": \"原文\", \"target\": \"译文\"}, ...] }，不得添加任何额外字段或文字。",
+        "label 必须使用能够精准定位文字的描述：复杂画面需写明画面编号、关联角色或物体、相对方位以及文字类型等；style 必须说明字体粗细、书写感、描边/阴影等风格特征；color 必须说明文字与描边/填充的颜色组合；简单布局可适当简化，但不得只写“左上角”等笼统方向。",
         "翻译长度应尽量与原文接近，宁可略短也不要明显增多；禁止添加括号、注解或解释说明，只输出纯翻译。"
       ].join("\n");
       if (instructions) {
@@ -1592,15 +1602,19 @@
       return list
         .map((entry) => ({
           label: entry?.label ?? entry?.position ?? "",
+          style: entry?.style ?? "",
+          color: entry?.color ?? "",
           source: entry?.source ?? entry?.original ?? "",
           target: entry?.target ?? entry?.translation ?? ""
         }))
         .map((entry) => ({
           label: String(entry.label || ""),
+          style: String(entry.style || ""),
+          color: String(entry.color || ""),
           source: String(entry.source || ""),
           target: String(entry.target || "")
         }))
-        .filter((entry) => entry.label || entry.source || entry.target);
+        .filter((entry) => entry.label || entry.source || entry.target || entry.style || entry.color);
     }
 
     function parseTranslationEntries(text) {
@@ -1633,12 +1647,16 @@
         if (match) {
           entries.push({
             label: match[1].trim(),
+            style: "",
+            color: "",
             source: match[2].trim(),
             target: match[3].trim()
           });
         } else {
           entries.push({
             label: "",
+            style: "",
+            color: "",
             source: line,
             target: ""
           });
@@ -1652,9 +1670,11 @@
         .filter((entry) => entry.label || entry.source || entry.target)
         .map((entry) => {
           const label = entry.label || "位置";
+          const style = entry.style ? `字体:${entry.style}` : "字体:保持原样";
+          const color = entry.color ? `颜色:${entry.color}` : "颜色:保持原样";
           const source = entry.source || "";
           const target = entry.target || "";
-          return `${label}：${source} => ${target}`;
+          return `${label} | ${style} | ${color}：${source} => ${target}`;
         })
         .join("\n");
     }
@@ -1665,6 +1685,16 @@
       labelInput.type = "text";
       labelInput.value = entry.label || "";
       labelInput.readOnly = !editable;
+
+      const styleInput = document.createElement("input");
+      styleInput.type = "text";
+      styleInput.value = entry.style || "";
+      styleInput.readOnly = !editable;
+
+      const colorInput = document.createElement("input");
+      colorInput.type = "text";
+      colorInput.value = entry.color || "";
+      colorInput.readOnly = !editable;
 
       const sourceInput = document.createElement("input");
       sourceInput.type = "text";
@@ -1693,6 +1723,8 @@
       };
 
       appendCell(labelInput);
+      appendCell(styleInput);
+      appendCell(colorInput);
       appendCell(sourceInput);
       appendCell(targetInput);
       const actionTd = document.createElement("td");
@@ -1704,7 +1736,7 @@
 
     function renderTranslationTable(entries, editable) {
       translationTableBody.innerHTML = "";
-      const list = entries.length ? entries : [{ label: "", source: "", target: "" }];
+      const list = entries.length ? entries : [{ label: "", style: "", color: "", source: "", target: "" }];
       list.forEach((entry) => {
         translationTableBody.appendChild(createTranslationRow(entry, editable));
       });
@@ -1720,11 +1752,13 @@
           const inputs = row.querySelectorAll("input");
           return {
             label: inputs[0]?.value.trim() || "",
-            source: inputs[1]?.value.trim() || "",
-            target: inputs[2]?.value.trim() || ""
+            style: inputs[1]?.value.trim() || "",
+            color: inputs[2]?.value.trim() || "",
+            source: inputs[3]?.value.trim() || "",
+            target: inputs[4]?.value.trim() || ""
           };
         })
-        .filter((entry) => entry.label || entry.source || entry.target);
+        .filter((entry) => entry.label || entry.source || entry.target || entry.style || entry.color);
     }
 
     function setTranslationEditingMode(editable) {
