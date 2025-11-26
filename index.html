@@ -549,8 +549,8 @@
         <h2>运行配置</h2>
         <div class="flex-row">
           <label>
-            媒体精度
-            <select id="mediaLevel">
+            媒体精度（暂不可用）
+            <select id="mediaLevel" disabled title="媒体精度配置暂时不可用">
               <option value="media_resolution_high" selected>High</option>
               <option value="media_resolution_medium">Medium</option>
               <option value="media_resolution_low">Low</option>
@@ -1912,7 +1912,10 @@
               { text: promptText },
               {
                 inlineData: { mimeType: mime, data: base64 },
-                mediaResolution: { level: mediaLevel }
+                /*
+                 * mediaResolution: { level: mediaLevel }
+                 * Disabled temporarily until the upstream feature stabilizes.
+                 */
               }
             ]
           }
@@ -1934,7 +1937,10 @@
               { text: editPrompt },
               {
                 inlineData: { mimeType: mime, data: base64 },
-                mediaResolution: { level: mediaLevel }
+                /*
+                 * mediaResolution: { level: mediaLevel }
+                 * Disabled temporarily until the upstream feature stabilizes.
+                 */
               }
             ]
           }
@@ -1957,7 +1963,10 @@
               { text: promptText },
               {
                 inlineData: { mimeType: mime, data: base64 },
-                mediaResolution: { level: mediaLevel }
+                /*
+                 * mediaResolution: { level: mediaLevel }
+                 * Disabled temporarily until the upstream feature stabilizes.
+                 */
               },
               { text: `当前翻译：\n${translationText}` }
             ]
