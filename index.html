@@ -447,6 +447,21 @@
     #previewCanvas {
       background: #fff;
     }
+    .share-link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .share-link-row input {
+      flex: 1;
+      min-width: 240px;
+    }
+    .share-link-status {
+      font-size: 13px;
+      margin-top: 8px;
+      color: #475569;
+    }
     @keyframes pulse {
       0% {
         box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
@@ -540,6 +555,9 @@
           <input type="password" id="imageKey" class="sync-input" placeholder="sk-..." />
         </label>
       </details>
+      <div class="table-actions">
+        <button type="button" class="btn secondary" id="exportModelSettingsBtn">导出自定义模型选项对应的链接</button>
+      </div>
     </div>
   </details>
 
@@ -786,6 +804,24 @@
       </div>
     </div>
   </div>
+  <div class="modal hidden" id="shareLinkModal">
+    <div class="modal-content" style="max-width: min(560px, 95vw);">
+      <div class="modal-header">
+        <div>
+          <h3 style="margin: 0;">导出模型设置</h3>
+          <small>复制以下链接即可快速分享当前 Base URL / Endpoint / Key 配置</small>
+        </div>
+        <button type="button" class="close-btn" id="closeShareLinkModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="share-link-row">
+          <input type="text" id="shareLinkInput" readonly />
+          <button type="button" class="btn" id="shareLinkCopyBtn">复制链接</button>
+        </div>
+        <p class="share-link-status" id="shareLinkStatus"></p>
+      </div>
+    </div>
+  </div>
 
   <script>
     const SECRET_TOKEN = "gemini-manga-localizer";
@@ -877,6 +913,12 @@
     const imageBaseUrlInput = document.getElementById("imageBaseUrl");
     const imageEndpointInput = document.getElementById("imageEndpoint");
     const imageKeyInput = document.getElementById("imageKey");
+    const exportModelSettingsBtn = document.getElementById("exportModelSettingsBtn");
+    const shareLinkModal = document.getElementById("shareLinkModal");
+    const closeShareLinkModalBtn = document.getElementById("closeShareLinkModal");
+    const shareLinkInput = document.getElementById("shareLinkInput");
+    const shareLinkCopyBtn = document.getElementById("shareLinkCopyBtn");
+    const shareLinkStatus = document.getElementById("shareLinkStatus");
     const openBlendBtn = document.getElementById("openBlendBtn");
     const blendModal = document.getElementById("blendModal");
     const closeBlendModalBtn = document.getElementById("closeBlendModal");
@@ -1065,7 +1107,9 @@
     function closeBlendModal() {
       if (!blendModal.classList.contains("hidden")) {
         blendModal.classList.add("hidden");
-        document.body.classList.remove("modal-open");
+        if (!shareLinkModal || shareLinkModal.classList.contains("hidden")) {
+          document.body.classList.remove("modal-open");
+        }
       }
       isMaskDrawing = false;
       lastMaskPoint = null;
@@ -1384,6 +1428,32 @@
       return path.startsWith("/") ? path : `/${path}`;
     }
 
+    function parseBooleanParam(value) {
+      if (value == null) {
+        return null;
+      }
+      const normalized = String(value).trim().toLowerCase();
+      if (!normalized) {
+        return null;
+      }
+      if (normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on") {
+        return true;
+      }
+      if (normalized === "0" || normalized === "false" || normalized === "no" || normalized === "off") {
+        return false;
+      }
+      return null;
+    }
+
+    function getQueryParamValue(params, ...keys) {
+      for (const key of keys) {
+        if (params.has(key)) {
+          return params.get(key);
+        }
+      }
+      return null;
+    }
+
     function getTranslationConfig() {
       const apiKey = translationKeyInput.value.trim() || DEFAULT_TRANSLATION_API_KEY;
       return {
@@ -1403,6 +1473,174 @@
         endpoint: useEndpoint ? translationConfig.endpoint : normalizeEndpoint(imageEndpointInput.value, DEFAULT_IMAGE_ENDPOINT),
         apiKey: useKey ? translationConfig.apiKey : imageKey
       };
+    }
+
+    function applyModelSettingsFromQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.toString()) {
+        return;
+      }
+
+      const translationBase = getQueryParamValue(params, "baseUrl", "baseurl", "translationBaseUrl");
+      const translationEndpoint = getQueryParamValue(params, "endpoint", "translationEndpoint");
+      const translationKey = getQueryParamValue(params, "key", "translationKey");
+      const imageBase = getQueryParamValue(params, "imageBaseUrl", "imageBaseurl");
+      const imageEndpoint = getQueryParamValue(params, "imageEndpoint");
+      const imageKey = getQueryParamValue(params, "imageKey");
+      const syncAll = parseBooleanParam(getQueryParamValue(params, "imageSyncAll", "syncAll"));
+      const syncBase = parseBooleanParam(getQueryParamValue(params, "imageSyncBase", "syncBase"));
+      const syncEndpoint = parseBooleanParam(getQueryParamValue(params, "imageSyncEndpoint", "syncEndpoint"));
+      const syncKey = parseBooleanParam(getQueryParamValue(params, "imageSyncKey", "syncKey"));
+
+      if (translationBase !== null) {
+        translationBaseUrlInput.value = translationBase;
+      }
+      if (translationEndpoint !== null) {
+        translationEndpointInput.value = translationEndpoint;
+      }
+      if (translationKey !== null) {
+        translationKeyInput.value = translationKey;
+      }
+      if (syncAll !== null) {
+        imageModelSyncAll.checked = syncAll;
+      }
+      if (syncBase !== null) {
+        imageModelSyncBase.checked = syncBase;
+      }
+      if (syncEndpoint !== null) {
+        imageModelSyncEndpoint.checked = syncEndpoint;
+      }
+      if (syncKey !== null) {
+        imageModelSyncKey.checked = syncKey;
+      }
+      if (imageModelSyncAll.checked) {
+        imageModelSyncBase.checked = true;
+        imageModelSyncEndpoint.checked = true;
+        imageModelSyncKey.checked = true;
+      }
+      if (imageBase !== null) {
+        imageBaseUrlInput.value = imageBase;
+      }
+      if (imageEndpoint !== null) {
+        imageEndpointInput.value = imageEndpoint;
+      }
+      if (imageKey !== null) {
+        imageKeyInput.value = imageKey;
+      }
+      applySyncState();
+      updateImageSizeAvailability();
+    }
+
+    function buildModelSettingsParams() {
+      const params = new URLSearchParams();
+      const translationBase = translationBaseUrlInput.value.trim();
+      const translationEndpoint = translationEndpointInput.value.trim();
+      const translationKeyValue = translationKeyInput.value.trim();
+      const imageBase = imageBaseUrlInput.value.trim();
+      const imageEndpoint = imageEndpointInput.value.trim();
+      const imageKeyValue = imageKeyInput.value.trim();
+
+      if (translationBase) {
+        params.set("baseUrl", translationBase);
+      }
+      if (translationEndpoint) {
+        params.set("endpoint", translationEndpoint);
+      }
+      if (translationKeyValue) {
+        params.set("key", translationKeyValue);
+      }
+      params.set("imageSyncAll", imageModelSyncAll.checked ? "1" : "0");
+      params.set("imageSyncBase", imageModelSyncBase.checked ? "1" : "0");
+      params.set("imageSyncEndpoint", imageModelSyncEndpoint.checked ? "1" : "0");
+      params.set("imageSyncKey", imageModelSyncKey.checked ? "1" : "0");
+      if (imageBase) {
+        params.set("imageBaseUrl", imageBase);
+      }
+      if (imageEndpoint) {
+        params.set("imageEndpoint", imageEndpoint);
+      }
+      if (imageKeyValue) {
+        params.set("imageKey", imageKeyValue);
+      }
+      return params;
+    }
+
+    function buildModelSettingsUrl() {
+      const params = buildModelSettingsParams();
+      const { origin, pathname, hash } = window.location;
+      const basePath =
+        origin && origin !== "null" ? `${origin}${pathname}` : window.location.href.split(/[?#]/)[0];
+      const query = params.toString();
+      return query ? `${basePath}?${query}${hash || ""}` : `${basePath}${hash || ""}`;
+    }
+
+    async function copyTextToClipboard(text) {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      fallbackCopyTextToClipboard(text);
+    }
+
+    function fallbackCopyTextToClipboard(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "absolute";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, text.length);
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (!successful) {
+        throw new Error("浏览器不支持复制到剪贴板");
+      }
+    }
+
+    function setShareLinkStatus(text = "", isError = false) {
+      if (!shareLinkStatus) return;
+      shareLinkStatus.textContent = text || "";
+      shareLinkStatus.style.color = isError ? "#dc2626" : "#475569";
+    }
+
+    function openModelSettingsExportModal() {
+      if (shareLinkInput) {
+        shareLinkInput.value = buildModelSettingsUrl();
+        shareLinkInput.focus();
+        shareLinkInput.select();
+      }
+      setShareLinkStatus("");
+      if (shareLinkModal) {
+        shareLinkModal.classList.remove("hidden");
+        document.body.classList.add("modal-open");
+      }
+    }
+
+    function closeShareLinkModal() {
+      if (!shareLinkModal || shareLinkModal.classList.contains("hidden")) {
+        return;
+      }
+      shareLinkModal.classList.add("hidden");
+      if (!blendModal || blendModal.classList.contains("hidden")) {
+        document.body.classList.remove("modal-open");
+      }
+    }
+
+    async function copyModelSettingsLink() {
+      if (!shareLinkInput) return;
+      const url = shareLinkInput.value.trim();
+      if (!url) {
+        setShareLinkStatus("没有可复制的链接。", true);
+        return;
+      }
+      try {
+        await copyTextToClipboard(url);
+        setShareLinkStatus("链接已复制，可分享给他人。");
+      } catch (error) {
+        console.error(error);
+        setShareLinkStatus(error.message || "复制失败，请手动选择文本。", true);
+      }
     }
 
     function extractParts(response) {
@@ -2430,6 +2668,7 @@
     imageModelSyncEndpoint.addEventListener("change", () => handleIndividualToggle(imageModelSyncEndpoint));
     imageModelSyncKey.addEventListener("change", () => handleIndividualToggle(imageModelSyncKey));
     applySyncState();
+    applyModelSettingsFromQueryParams();
 
     addGlossaryRowBtn.addEventListener("click", () => addGlossaryRow());
     addTranslationRowBtn.addEventListener("click", () => {
@@ -2488,6 +2727,28 @@
     if (returnToEditingBtn) {
       returnToEditingBtn.addEventListener("click", () => {
         reopenTranslationEditing();
+      });
+    }
+    if (exportModelSettingsBtn) {
+      exportModelSettingsBtn.addEventListener("click", () => {
+        openModelSettingsExportModal();
+      });
+    }
+    if (shareLinkCopyBtn) {
+      shareLinkCopyBtn.addEventListener("click", () => {
+        copyModelSettingsLink();
+      });
+    }
+    if (closeShareLinkModalBtn) {
+      closeShareLinkModalBtn.addEventListener("click", () => {
+        closeShareLinkModal();
+      });
+    }
+    if (shareLinkModal) {
+      shareLinkModal.addEventListener("click", (event) => {
+        if (event.target === shareLinkModal) {
+          closeShareLinkModal();
+        }
       });
     }
     resumeEditingBtn.addEventListener("click", async () => {
@@ -2583,6 +2844,7 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         closeBlendModal();
+        closeShareLinkModal();
       }
     });
     blendCanvas.addEventListener("pointerdown", handlePointerDown);
