@@ -1648,6 +1648,13 @@
     }
 
     function extractTextFromParts(parts) {
+      const nonThoughtTexts = parts
+        .filter((part) => !part?.thought)
+        .map((part) => part?.text?.trim())
+        .filter(Boolean);
+      if (nonThoughtTexts.length) {
+        return nonThoughtTexts.join("\n").trim();
+      }
       return parts
         .map((part) => part?.text?.trim())
         .filter(Boolean)
