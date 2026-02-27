@@ -156,6 +156,13 @@
       margin-bottom: 12px;
       font-weight: 500;
     }
+    .field-note {
+      display: block;
+      margin: -8px 0 12px 28px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #64748b;
+    }
     pre {
       background: #0f172a;
       color: #f8fafc;
@@ -517,7 +524,7 @@
           </label>
           <label>
             Endpoint
-            <input type="text" id="translationEndpoint" placeholder="/v1beta/models/gemini-3-pro-preview:generateContent" />
+            <input type="text" id="translationEndpoint" placeholder="/v1beta/models/gemini-3.1-pro-preview:generateContent" />
           </label>
         </div>
         <label>
@@ -590,6 +597,11 @@
             </select>
           </label>
         </div>
+      <label class="checkbox-inline">
+        <input type="checkbox" id="lowCostMode" checked />
+        低成本模式
+      </label>
+      <small class="field-note">改用新的3flash和3.1flash-image模型，在保证效果的同时降低成本。</small>
       <label>
         漫画图片
         <input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp" />
@@ -837,7 +849,7 @@
     }
 
     const ENCRYPTED_DEFAULT_BASE_URL = "DxEZGR1TAkIUAAMYTBwGTQIDBA==";
-    const ENCRYPTED_TRANSLATION_ENDPOINT = "SBNcCwsdTEIMAQMEQR9ABAQBABQMX1RIHRsBRF0fBBgOBFpWCAYPCRsbERckCgMdCwdZ";
+    const ENCRYPTED_TRANSLATION_ENDPOINT = "SBNcCwsdTEIMAQMEQR9ABAQBABQMX1RLXEQeG0JAERwCF0QJGFkGCQcfFxMTAC4GAB1IAxU=";
     const ENCRYPTED_IMAGE_ENDPOINT = "SBNcCwsdTEIMAQMEQR9ABAQBABQMX1RIHRsBREQAAAkCTF0eChUICR5AAhcJAB8IGgxuAg8aAg9Z";
     const ENCRYPTED_TRANSLATION_API_KEY = "FA5AEScAYVgEP1MkXjYdEzQIUDIcCygjFD8aWFwnJhYtUR07ISdXHVofE0MQF11ZNj8b";
     const ENCRYPTED_IMAGE_API_KEY = "FA5ALhksZyUvXg5ZRz8/Oy5aJA8fFDM9XiUcBEs9Jj4GCGUPOzoJITMjMyU+PV4gAAxC";
@@ -845,6 +857,8 @@
     const DEFAULT_BASE_URL = decryptValue(ENCRYPTED_DEFAULT_BASE_URL);
     const DEFAULT_TRANSLATION_ENDPOINT = decryptValue(ENCRYPTED_TRANSLATION_ENDPOINT);
     const DEFAULT_IMAGE_ENDPOINT = decryptValue(ENCRYPTED_IMAGE_ENDPOINT);
+    const LOW_COST_TRANSLATION_ENDPOINT = "/v1beta/models/gemini-3-flash-preview:generateContent";
+    const LOW_COST_IMAGE_ENDPOINT = "/v1beta/models/gemini-3.1-flash-image-preview:generateContent";
     const DEFAULT_TRANSLATION_API_KEY = decryptValue(ENCRYPTED_TRANSLATION_API_KEY);
     const DEFAULT_IMAGE_API_KEY = decryptValue(ENCRYPTED_IMAGE_API_KEY);
     const LANGUAGE_LABELS = {
@@ -892,6 +906,7 @@
     const mediaLevelSelect = document.getElementById("mediaLevel");
     const thinkingLevelSelect = document.getElementById("thinkingLevel");
     const imageSizeSelect = document.getElementById("imageSize");
+    const lowCostModeCheckbox = document.getElementById("lowCostMode");
     const imageSize4kOption = imageSizeSelect.querySelector('option[value="4K"]');
     const imageInput = document.getElementById("imageInput");
     const targetLanguageSelect = document.getElementById("targetLanguage");
@@ -1456,9 +1471,12 @@
 
     function getTranslationConfig() {
       const apiKey = translationKeyInput.value.trim() || DEFAULT_TRANSLATION_API_KEY;
+      const endpoint = lowCostModeCheckbox && lowCostModeCheckbox.checked
+        ? LOW_COST_TRANSLATION_ENDPOINT
+        : normalizeEndpoint(translationEndpointInput.value, DEFAULT_TRANSLATION_ENDPOINT);
       return {
         baseUrl: normalizeBaseUrl(translationBaseUrlInput.value, DEFAULT_BASE_URL),
-        endpoint: normalizeEndpoint(translationEndpointInput.value, DEFAULT_TRANSLATION_ENDPOINT),
+        endpoint,
         apiKey
       };
     }
@@ -1468,9 +1486,14 @@
       const useEndpoint = imageModelSyncEndpoint.checked;
       const useKey = imageModelSyncKey.checked;
       const imageKey = imageKeyInput.value.trim() || DEFAULT_IMAGE_API_KEY;
+      const endpoint = lowCostModeCheckbox && lowCostModeCheckbox.checked
+        ? LOW_COST_IMAGE_ENDPOINT
+        : (useEndpoint
+          ? translationConfig.endpoint
+          : normalizeEndpoint(imageEndpointInput.value, DEFAULT_IMAGE_ENDPOINT));
       return {
         baseUrl: useBase ? translationConfig.baseUrl : normalizeBaseUrl(imageBaseUrlInput.value, DEFAULT_BASE_URL),
-        endpoint: useEndpoint ? translationConfig.endpoint : normalizeEndpoint(imageEndpointInput.value, DEFAULT_IMAGE_ENDPOINT),
+        endpoint,
         apiKey: useKey ? translationConfig.apiKey : imageKey
       };
     }
